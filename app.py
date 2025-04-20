@@ -3,6 +3,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from datetime import time
 from rapidfuzz import fuzz
+import xlrd
+
 
 def match_names(df, col1="Receiver Name - WU", col2="Receiver Name - IBAG"):
     if {col1, col2}.issubset(df.columns):
