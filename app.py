@@ -107,20 +107,24 @@ def prepare_data(file):
         )
     else:
         df['System'] = 'Unknown'
-    # تأكد أن العمود 'Actual Payout Amount' عبارة عن أرقام
+   
+    # 1. تحويل العمود لأرقام (أي قيمة غير رقمية تتحوّل إلى NaN)
     df['Actual Payout Amount'] = pd.to_numeric(df['Actual Payout Amount'], errors='coerce')
 
-# إنشاء الفئات (bins) الخاصة بالمبالغ
+# 2. حذف الصفوف اللي فيها قيم NaN في العمود ده
+    df = df.dropna(subset=['Actual Payout Amount'])
+
+# 3. تعريف الفئات (bins) والتصنيفات (labels)
     bins = [0, 1000, 2000, 3000, 5000, float('inf')]
     labels = ['0-999', '1000-1999', '2000-2999', '3000-4999', 'Over 5000']
 
-# إنشاء العمود الجديد للفئة
+# 4. تطبيق التصنيف باستخدام pd.cut
     df['Amount_range'] = pd.cut(
         df['Actual Payout Amount'],
         bins=bins,
         labels=labels,
-        right=False  # هذا يجعل الحد الأعلى غير شامل (5000 لن تدخل ضمن 3000-4999 بل ضمن Over 5000)
-)
+        right=False  # ده معناه إن 5000 هتدخل في "Over 5000"
+    )
 
 
     df['Sender Name Count'] = df.groupby('Sender Full Name')['Sender Full Name'].transform('count')
