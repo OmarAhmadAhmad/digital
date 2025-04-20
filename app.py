@@ -1,4 +1,4 @@
-pip install xlrd
+%pip install xlrd
 
 import streamlit as st
 import pandas as pd
