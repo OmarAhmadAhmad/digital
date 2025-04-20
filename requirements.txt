@@ -4,3 +4,4 @@ matplotlib
 rapidfuzz
 plotly
 openpyxl
+xlrd
