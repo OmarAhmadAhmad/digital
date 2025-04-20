@@ -62,7 +62,6 @@ def add_transfer_duration(df):
     return df
 
 def prepare_data(file):
-    import xlrd
     df = pd.read_excel(file,header=None)
     for i, row in df.iterrows():
         if 'Creation Date' in row.values:
