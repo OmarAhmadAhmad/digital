@@ -68,9 +68,7 @@ def prepare_data(file):
             df.columns=row
             df=df[i+1:].reset_index(drop=True)
             break
-        else:
-            st.error("لم يتم العثور على صف يحتوي على الاعمدة الصحيحة مثل 'Creation Date'.")
-            return pd.DataFrame()
+     
         
 
     if "Sender Mobile Number" in df.columns:
