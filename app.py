@@ -63,21 +63,12 @@ def add_transfer_duration(df):
 
 def prepare_data(file):
     df = pd.read_excel(file,header=None)
-    target_column='Creation Date' 
-    found=False
     for i, row in df.iterrows():
-        if any(str(cell).strip()==:
+        if 'Creation Date' in row.values:
+            
             df.columns=row
-            df=df[i+1:].reset_index(drop=True) 
-            found=True
-                                                  
+            df=df[i+1:].reset_index(drop=True)                                     
             break
-        if not found:
-            st.error(f"لم يتم العثور على العمود '{target_column}' فى اى صف")
-            return pd.Dataframe()
-     
-        
-
     if "Sender Mobile Number" in df.columns:
         df["Sender Mobile Number"] = df["Sender Mobile Number"].astype(str)
 
