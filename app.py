@@ -167,8 +167,8 @@ def employee_summary(df):
         first_transactions = emp_df.groupby("transaction_date")["Creation Date"].min()
         first_transactions = pd.Series(first_transactions.values, index=pd.to_datetime(first_transactions.index))
 
-        on_time_morning = first_transactions.between_time("08:30", "08:45").count()
-        on_time_evening = first_transactions.between_time("13:30", "13:45").count()
+        on_time_morning = first_transactions.between_time("08:30", "08:46").count()
+        on_time_evening = first_transactions.between_time("13:30", "13:46").count()
         on_time_days = on_time_morning + on_time_evening
         commitment_score = on_time_days * 1
 
