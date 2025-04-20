@@ -3,12 +3,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from datetime import time
 from rapidfuzz import fuzz
-try:
-    
-    import xlrd 
-except ImportError :
-    st.error(" مكتبه xlrd  غير مثبته pip install xlrd ")
-    st.stop()
+import os
+
 
 
 def match_names(df, col1="Receiver Name - WU", col2="Receiver Name - IBAG"):
@@ -69,12 +65,27 @@ def add_transfer_duration(df):
     return df
 
 def prepare_data(file):
-    df = pd.read_excel(file,header=None)
+    file_ext = os.path.splitext(file.name)[1].lower()
+
+    try:
+        if file_ext == ".xls":
+            df = pd.read_excel(file, engine="xlrd", header=None)
+        elif file_ext == ".xlsx":
+            df = pd.read_excel(file, engine="openpyxl", header=None)
+        elif file_ext == ".csv":
+            df = pd.read_csv(file, header=None, encoding='utf-8')  # استخدم encoding مناسب حسب الملف
+        else:
+            st.error("نوع الملف غير مدعوم. يرجى رفع ملف بامتداد xls أو xlsx أو csv.")
+            st.stop()
+    except Exception as e:
+        st.error(f"حدث خطأ أثناء قراءة الملف: {e}")
+        st.stop()
+
+    # 👇 نفس المعالجة السابقة
     for i, row in df.iterrows():
         if 'Creation Date' in row.values:
-            
-            df.columns=row
-            df=df[i+1:].reset_index(drop=True)                                     
+            df.columns = row
+            df = df[i+1:].reset_index(drop=True)
             break
     if "Sender Mobile Number" in df.columns:
         df["Sender Mobile Number"] = df["Sender Mobile Number"].astype(str)
