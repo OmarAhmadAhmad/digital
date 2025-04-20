@@ -107,9 +107,21 @@ def prepare_data(file):
         )
     else:
         df['System'] = 'Unknown'
+    # تأكد أن العمود 'Actual Payout Amount' عبارة عن أرقام
+    df['Actual Payout Amount'] = pd.to_numeric(df['Actual Payout Amount'], errors='coerce')
 
-    df['Amount_range'] = pd.cut(df['Actual Payout Amount'], bins=[0, 1000, 2000, 3000, 4999, float('inf')],
-                                labels=['Limit_1000', 'Limit_2000', 'Limit_3000', 'Limit_5000', 'over_limit'])
+# إنشاء الفئات (bins) الخاصة بالمبالغ
+    bins = [0, 1000, 2000, 3000, 5000, float('inf')]
+    labels = ['0-999', '1000-1999', '2000-2999', '3000-4999', 'Over 5000']
+
+# إنشاء العمود الجديد للفئة
+    df['Amount_range'] = pd.cut(
+        df['Actual Payout Amount'],
+        bins=bins,
+        labels=labels,
+        right=False  # هذا يجعل الحد الأعلى غير شامل (5000 لن تدخل ضمن 3000-4999 بل ضمن Over 5000)
+)
+
 
     df['Sender Name Count'] = df.groupby('Sender Full Name')['Sender Full Name'].transform('count')
 
