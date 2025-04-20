@@ -62,7 +62,17 @@ def add_transfer_duration(df):
     return df
 
 def prepare_data(file):
-    df = pd.read_excel(file)
+    import xlrd
+    df = pd.read_excel(file,header=None)
+    for i, row in df.iterrows():
+        if 'Creation Date' in row.values:
+            df.columns=row
+            df=df[i+1:].reset_index(drop=True)
+            break
+        else:
+            st.error("لم يتم العثور على صف يحتوي على الاعمدة الصحيحة مثل 'Creation Date'.")
+            return pd.DataFrame()
+        
 
     if "Sender Mobile Number" in df.columns:
         df["Sender Mobile Number"] = df["Sender Mobile Number"].astype(str)
@@ -175,7 +185,7 @@ st.markdown("""
     <h1 style='text-align: right;'>لوحة تحكم أداء الفرع والموظفين</h1>
 """, unsafe_allow_html=True)
 
-uploaded_file = st.file_uploader("📂 ارفع ملف Excel", type="xlsx")
+uploaded_file = st.file_uploader("📂 ارفع ملف Excel", type=["xlsx","xls"])
 
 if uploaded_file:
     df = prepare_data(uploaded_file)
