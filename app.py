@@ -4,11 +4,10 @@ import matplotlib.pyplot as plt
 from datetime import time
 from rapidfuzz import fuzz
 try:
-    import xlrd 
-    except ImportError :
-        
-        st.error(" مكتبه xlrd  غير مثبته pip install xlrd ")
-        st.stop()
+import xlrd 
+except ImportError :
+    st.error(" مكتبه xlrd  غير مثبته pip install xlrd ")
+    st.stop()
 
 
 def match_names(df, col1="Receiver Name - WU", col2="Receiver Name - IBAG"):
