@@ -171,7 +171,12 @@ def branch_summary(df):
     report = {}
     report["unique_customers"] = df["Receiver Name - WU"].nunique()
     report["total_transfers"] = len(df)
-    report["transfers_by_system"] = df["System"].value_counts().to_dict()
+    app_count = df[df["System"] == "App"].shape[0]
+    total_count = df.shape[0]
+    app_ratio = round((app_count / total_count) * 100, 2)
+
+    report["app_transfer_count"] = app_count
+    report["app_transfer_ratio"] = app_ratio
 
     day_stats = df.groupby("transaction_date").agg({
         "MTCN": "count",
@@ -181,7 +186,7 @@ def branch_summary(df):
     report["high_transfer_days"] = over_300.to_dict(orient="records")
 
     if "Sender Country" in df.columns:
-        top_countries = df["Sender Country"].value_counts().head(5).to_dict()
+        top_countries = df["Sender Country"].value_counts().head(10).to_dict()
     else:
         top_countries = {}
     report["top_5_senders"] = top_countries
@@ -318,6 +323,11 @@ if uploaded_file:
     st.markdown("### 📊 تفاصيل أيام الذروة وزمن الانتظار")
     st.dataframe(peak_waiting_detail, use_container_width=True)
 
+    st.metric("📱 عدد تحويلات App", branch_report["app_transfer_count"])
+    st.metric("📊 نسبة تحويلات App", f"{branch_report['app_transfer_ratio']}%")
+
+
+    
     
     st.markdown("""<h2 style='text-align: right;'>🏅 الموظف المثالي</h2>""", unsafe_allow_html=True)
     emp_df = pd.DataFrame.from_dict(employee_report, orient="index").reset_index().rename(columns={"index": "اسم الموظف"})
