@@ -379,10 +379,8 @@ if uploaded_file:
     top_countries_df = pd.DataFrame(branch_report["top_10_senders"].items(), columns=["الدولة", "عدد التحويلات"])
     st.dataframe(top_countries_df)
 
-
-
     with st.expander("💵 توزيع المبالغ حسب الشرائح"):
-    st.dataframe(branch_report["amount_bins_summary"], use_container_width=True)
+        st.dataframe(branch_report["amount_bins_summary"], use_container_width=True)
 
 
     
