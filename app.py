@@ -47,14 +47,18 @@ def calculate_system_downtime(df):
         total_downtime_hours = downtime_gaps.sum() / 60
         result.append({
             'تاريخ': day,
+            'اليوم': pd.to_datetime(day).day_name(),
+            'عدد_التحويلات': len(group),
+            'عدد_الموظفين': group['Operator Id'].nunique(),
             'عدد_مرات_التوقف': downtime_gaps.count(),
             'إجمالي_ساعات_التوقف': round(total_downtime_hours, 2)
         })
-    
+
     # تصفية الأيام التي لا يوجد بها توقف
     result_df = pd.DataFrame(result)
     result_df = result_df[result_df['عدد_مرات_التوقف'] > 0]
     return result_df
+
 
 
 
