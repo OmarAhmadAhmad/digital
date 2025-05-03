@@ -152,30 +152,34 @@ def employee_summary(df):
 def generate_final_employee_report(df):
     df['transaction_date'] = df['Creation Date'].dt.date
 
+    # جميع الأيام التي عمل فيها الفرع (أي يوم فيه تحويلات)
+    all_branch_days = sorted(df['transaction_date'].unique())
+    total_branch_days = len(all_branch_days)
+
+    # عدد أيام العمل للموظف = عدد الأيام التي له فيها تحويلات
     days_worked = df.groupby('Operator Id')['transaction_date'].nunique().reset_index(name='أيام_العمل')
 
+    # حساب ساعات العمل لكل يوم
     work_time = df.groupby(['Operator Id', 'transaction_date'])['Creation Date'].agg(['min', 'max']).reset_index()
     work_time['ساعات_اليوم'] = (work_time['max'] - work_time['min']).dt.total_seconds() / 3600
 
     total_hours = work_time.groupby('Operator Id')['ساعات_اليوم'].sum().reset_index(name='إجمالي_الساعات')
 
-    all_branch_days = sorted(df['transaction_date'].drop_duplicates())
-    operator_dates = df.groupby('Operator Id')['transaction_date'].apply(lambda x: set(x)).reset_index()
-    operator_dates['أيام_الغياب'] = operator_dates['transaction_date'].apply(
-        lambda x: len(set(all_branch_days) - x)
-    )
+    # حساب الغياب = أيام الفرع - أيام الموظف
+    days_worked['أيام_الغياب'] = total_branch_days - days_worked['أيام_العمل']
 
+    # تجميع التقرير
     report = days_worked.merge(total_hours, on='Operator Id')
-    report = report.merge(operator_dates[['Operator Id', 'أيام_الغياب']], on='Operator Id')
 
-    report['عدد_التحويلات'] = df.groupby('Operator Id').size().reindex(report['Operator Id']).values
-    report['عدد_الحوالات_في_الساعة'] = round(report['عدد_التحويلات'] / report['إجمالي_الساعات'].replace(0, 1)).astype(int)
-    report['متوسط_السرعة_في_الساعة'] = round((report['إجمالي_الساعات'] * 60) / report['عدد_التحويلات'].replace(0, 1)).astype(int)
+    report['عدد_التحويلات'] = df.groupby('Operator Id').size().reindex(report['Operator Id']).fillna(0).astype(int).values
+    report['عدد_الحوالات_في_الساعة'] = (report['عدد_التحويلات'] / report['إجمالي_الساعات'].replace(0, 1)).round().astype(int)
+    report['متوسط_السرعة_في_الساعة'] = ((report['إجمالي_الساعات'] * 60) / report['عدد_التحويلات'].replace(0, 1)).round().astype(int)
 
     total_branch_transfers = report['عدد_التحويلات'].sum()
-    report['نسبة_التحويلات'] = round((report['عدد_التحويلات'] / total_branch_transfers) * 100).astype(int)
+    report['نسبة_التحويلات'] = ((report['عدد_التحويلات'] / total_branch_transfers) * 100).round().astype(int)
+
     total_branch_hours = report['إجمالي_الساعات'].sum()
-    report['نسبة_الساعات'] = round((report['إجمالي_الساعات'] / total_branch_hours) * 100).astype(int)
+    report['نسبة_الساعات'] = ((report['إجمالي_الساعات'] / total_branch_hours) * 100).round().astype(int)
 
     final = report.rename(columns={
         'Operator Id': 'الموظف',
