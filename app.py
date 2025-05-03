@@ -265,12 +265,14 @@ if uploaded_file:
 
 
 
-    st.subheader("🛑 تقرير توقف السيستم")
-    st.dataframe(downtime_report, use_container_width=True)
     
     st.subheader("📈 تقرير الأداء التفصيلي")
     st.dataframe(final_emp_report, use_container_width=True)
-    
+
+    st.subheader("🛑 تقرير توقف السيستم")
+    st.dataframe(downtime_report, use_container_width=True)
+
+
     st.markdown("""<h2 style='text-align: right;'>🏅 الموظف المثالي</h2>""", unsafe_allow_html=True)
     emp_df = pd.DataFrame.from_dict(employee_report, orient="index").reset_index().rename(columns={"index": "اسم الموظف"})
     emp_df = emp_df.rename(columns={
