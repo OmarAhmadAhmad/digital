@@ -195,8 +195,6 @@ def generate_final_employee_report(df):
 
 
 
-
-
 def client_behavior_report(df):
     report = {}
 
