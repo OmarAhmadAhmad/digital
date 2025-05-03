@@ -35,9 +35,10 @@ def match_names(df, col1="Receiver Name - WU", col2="Receiver Name - IBAG"):
     return df
 
 
-def calculate_peak_waiting_time_actual(df):
+def detailed_peak_waiting_report(df):
     df = df.sort_values(by='Creation Date')
-    peak_waits = []
+    df['hour'] = df['Creation Date'].dt.hour
+    result = []
 
     for day, group in df.groupby('transaction_date'):
         group = group.sort_values('Creation Date')
@@ -49,14 +50,23 @@ def calculate_peak_waiting_time_actual(df):
         start = group['Creation Date'].iloc[0]
         end = group['Creation Date'].iloc[-1]
         total_minutes = (end - start).total_seconds() / 60
-
-        expected_minutes = (count - 1) * 1  # دقيقة واحدة لكل تحويل
+        expected_minutes = (count - 1) * 1
         excess_wait = max(total_minutes - expected_minutes, 0)
 
-        peak_waits.append(excess_wait)
+        max_hour = group['hour'].value_counts().idxmax()
+        num_employees = group['Operator Id'].nunique()
 
-    avg_peak_wait = int(round(sum(peak_waits) / len(peak_waits))) if peak_waits else 0
-    return avg_peak_wait
+        result.append({
+            "تاريخ": day,
+            "اليوم": group["day_of_week"].iloc[0] if "day_of_week" in group.columns else pd.to_datetime(day).day_name(),
+            "عدد التحويلات": count,
+            "عدد الموظفين": num_employees,
+            "الانتظار الزائد (دقائق)": round(excess_wait, 2),
+            "أعلى ساعة تحويلات": f"{max_hour}:00"
+        })
+
+    return pd.DataFrame(result)
+
 
 
 
@@ -292,7 +302,7 @@ if uploaded_file:
     client_report = client_behavior_report(df)
     final_emp_report = generate_final_employee_report(df)
     downtime_report = calculate_system_downtime(df)
-    avg_peak_wait = calculate_peak_waiting_time_actual(df)
+    peak_waiting_detail = detailed_peak_waiting_report(df)
 
 
 
@@ -305,8 +315,8 @@ if uploaded_file:
     st.subheader("🛑 تقرير توقف السيستم")
     st.dataframe(downtime_report, use_container_width=True)
 
-    st.metric("⏱️ متوسط وقت انتظار العملاء (فعليًا) في أيام الذروة", f"{avg_peak_wait} دقيقة")
-
+    st.markdown("### 📊 تفاصيل أيام الذروة وزمن الانتظار")
+    st.dataframe(peak_waiting_detail, use_container_width=True)
 
     
     st.markdown("""<h2 style='text-align: right;'>🏅 الموظف المثالي</h2>""", unsafe_allow_html=True)
