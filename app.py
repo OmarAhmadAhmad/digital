@@ -292,7 +292,7 @@ if uploaded_file:
     client_report = client_behavior_report(df)
     final_emp_report = generate_final_employee_report(df)
     downtime_report = calculate_system_downtime(df)
-    avg_peak_wait = calculate_peak_waiting_time(df)
+    avg_peak_wait = calculate_peak_waiting_time_actual(df)
 
 
 
