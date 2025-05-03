@@ -149,8 +149,8 @@ def prepare_data(file):
     else:
         df['System'] = 'Unknown'
 
-    df['Amount_range'] = pd.cut(df['Actual Payout Amount'], bins=[0, 1000, 2000, 3000, 4999, float('inf')],
-                                labels=['Limit_1000', 'Limit_2000', 'Limit_3000', 'Limit_5000', 'over_limit'])
+    df['Amount_range'] = pd.cut(df['Actual Payout Amount'], bins=[0, 500, 1000, 1500, 4999, float('inf')],
+                                labels=['Limit_500', 'Limit_1000', 'Limit_1500', 'Limit_5000', 'over_limit'])
 
     df['Sender Name Count'] = df.groupby('Sender Full Name')['Sender Full Name'].transform('count')
 
@@ -162,23 +162,49 @@ def prepare_data(file):
 
 def branch_summary(df):
     report = {}
+    
+    # عدد العملاء الفريدين
     report["unique_customers"] = df["Receiver Name - WU"].nunique()
+    
+    # إجمالي عدد التحويلات
     report["total_transfers"] = len(df)
+    
+    # توزيع التحويلات حسب النظام
+    system_counts = df["System"].value_counts()
+    report["transfers_by_system"] = system_counts.to_dict()
+
+    # عدد تحويلات App فقط ونسبتها
+    app_count = system_counts.get("App", 0)
+    app_ratio = round((app_count / report["total_transfers"]) * 100, 2) if report["total_transfers"] > 0 else 0
+    report["app_stats"] = {"عدد": app_count, "النسبة": app_ratio}
+
+    # أيام تتعدى 300 تحويل
     day_stats = df.groupby("transaction_date").agg({
         "MTCN": "count",
-        "Operator Id": lambda x: x.unique().tolist()
+        "Operator Id": lambda x: x.nunique()
     }).reset_index()
     over_300 = day_stats[day_stats["MTCN"] > 300]
     report["high_transfer_days"] = over_300.to_dict(orient="records")
 
+    # أعلى 10 دول راسلة
     if "Sender Country" in df.columns:
-        top_countries = df["Sender Country"].value_counts().head(5).to_dict()
+        top_countries = df["Sender Country"].value_counts().head(10).to_dict()
     else:
         top_countries = {}
-    report["top_5_senders"] = top_countries
+    report["top_10_senders"] = top_countries
 
+    # إجمالي المبلغ المدفوع
     report["total_amount"] = df["Actual Payout Amount"].sum()
+
+    # توزيع المبالغ حسب الشرائح
+    amount_bins_summary = df.groupby("Amount_range").agg(
+        عدد_التحويلات=("MTCN", "count"),
+        إجمالي_المبلغ=("Actual Payout Amount", "sum")
+    ).reset_index()
+    report["amount_bins_summary"] = amount_bins_summary
+
     return report
+
 
 
 def employee_summary(df):
@@ -341,15 +367,26 @@ if uploaded_file:
     col1.metric("عدد عملاء الفرع", branch_report["unique_customers"])
     col2.metric("إجمالي عدد التحويلات", branch_report["total_transfers"])
 
-    with st.expander("📊 التحويلات حسب النظام"):
-        system_df = pd.DataFrame(branch_report["transfers_by_system"].items(), columns=["النظام", "عدد التحويلات"])
-        st.dataframe(system_df.style.set_table_styles([{ 'selector': 'th', 'props': [('text-align', 'right')] }]), use_container_width=True)
+    # with st.expander("📊 التحويلات حسب النظام"):
+    #     system_df = pd.DataFrame(branch_report["transfers_by_system"].items(), columns=["النظام", "عدد التحويلات"])
+    #     st.dataframe(system_df.style.set_table_styles([{ 'selector': 'th', 'props': [('text-align', 'right')] }]), use_container_width=True)
+    st.metric("عدد تحويلات App", branch_report["app_stats"]["عدد"])
+    st.metric("نسبة تحويلات App", f"{branch_report['app_stats']['النسبة']}%")
 
-    st.markdown("#### أعلى 5 دول مرسلة")
-    countries_df = pd.DataFrame(branch_report["top_5_senders"].items(), columns=["الدولة", "عدد التحويلات"])
-    st.dataframe(countries_df)
+    # st.markdown("#### أعلى 5 دول مرسلة")
+    # countries_df = pd.DataFrame(branch_report["top_5_senders"].items(), columns=["الدولة", "عدد التحويلات"])
+    # st.dataframe(countries_df)
+    top_countries_df = pd.DataFrame(branch_report["top_10_senders"].items(), columns=["الدولة", "عدد التحويلات"])
+    st.dataframe(top_countries_df)
 
-    st.markdown(f"### 💰 إجمالي المبلغ المدفوع: **{branch_report['total_amount']:.2f} دولار**")
+
+
+    with st.expander("💵 توزيع المبالغ حسب الشرائح"):
+    st.dataframe(branch_report["amount_bins_summary"], use_container_width=True)
+
+
+    
+    # st.markdown(f"### 💰 إجمالي المبلغ المدفوع: **{branch_report['total_amount']:.2f} دولار**")
 
     st.markdown("""<h2 style='text-align: right;'>👤 تحليل العملاء</h2>""", unsafe_allow_html=True)
     tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(["ذو مخاطر عالية", "الأكثر استلامًا", "الأعلى مبالغ", "أكثر من 3 راسلين", "تشابه الأسماء", "تصنيف أسماء الراسلين"])
