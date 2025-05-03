@@ -305,7 +305,7 @@ if uploaded_file:
     st.subheader("🛑 تقرير توقف السيستم")
     st.dataframe(downtime_report, use_container_width=True)
 
-s    t.metric("⏱️ متوسط وقت انتظار العملاء (فعليًا) في أيام الذروة", f"{avg_peak_wait} دقيقة")
+    st.metric("⏱️ متوسط وقت انتظار العملاء (فعليًا) في أيام الذروة", f"{avg_peak_wait} دقيقة")
 
 
     
