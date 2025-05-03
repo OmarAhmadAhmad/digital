@@ -152,24 +152,18 @@ def employee_summary(df):
 def generate_final_employee_report(df):
     df['transaction_date'] = df['Creation Date'].dt.date
 
-    # جميع الأيام التي عمل فيها الفرع (أي يوم فيه تحويلات)
     all_branch_days = sorted(df['transaction_date'].unique())
     total_branch_days = len(all_branch_days)
 
-    # عدد أيام العمل للموظف = عدد الأيام التي له فيها تحويلات
     days_worked = df.groupby('Operator Id')['transaction_date'].nunique().reset_index(name='أيام_العمل')
 
-    # حساب ساعات العمل لكل يوم
     work_time = df.groupby(['Operator Id', 'transaction_date'])['Creation Date'].agg(['min', 'max']).reset_index()
     work_time['ساعات_اليوم'] = (work_time['max'] - work_time['min']).dt.total_seconds() / 3600
 
     total_hours = work_time.groupby('Operator Id')['ساعات_اليوم'].sum().reset_index(name='إجمالي_الساعات')
 
-    # حساب الغياب = أيام الفرع - أيام الموظف
-    days_worked['أيام_الغياب'] = total_branch_days - days_worked['أيام_العمل']
-
-    # تجميع التقرير
     report = days_worked.merge(total_hours, on='Operator Id')
+    report['أيام_الغياب'] = total_branch_days - report['أيام_العمل']
 
     report['عدد_التحويلات'] = df.groupby('Operator Id').size().reindex(report['Operator Id']).fillna(0).astype(int).values
     report['عدد_الحوالات_في_الساعة'] = (report['عدد_التحويلات'] / report['إجمالي_الساعات'].replace(0, 1)).round().astype(int)
@@ -197,7 +191,6 @@ def generate_final_employee_report(df):
     ]]
 
     return final
-
 
 def client_behavior_report(df):
     report = {}
@@ -237,6 +230,16 @@ if uploaded_file:
     final_emp_report = generate_final_employee_report(df)
     st.subheader("📈 تقرير الأداء التفصيلي")
     st.dataframe(final_emp_report, use_container_width=True)
+    st.subheader("📊 مقارنة النسب بين الموظفين")
+    fig, ax = plt.subplots(figsize=(10, 5))
+    ax.bar(final_emp_report['الموظف'], final_emp_report['نسبة_التحويلات'], label='نسبة التحويلات')
+    ax.bar(final_emp_report['الموظف'], final_emp_report['نسبة_الساعات'], bottom=0, alpha=0.5, label='نسبة الساعات')
+    ax.set_ylabel("النسبة (%)")
+    ax.set_title("نسبة التحويلات والساعات لكل موظف")
+    ax.legend()
+    plt.xticks(rotation=45)
+    st.pyplot(fig)
+
 
 
     
