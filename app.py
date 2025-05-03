@@ -3,6 +3,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from datetime import time
 from rapidfuzz import fuzz
+from calendar import monthrange
 
 def match_names(df, col1="Receiver Name - WU", col2="Receiver Name - IBAG"):
     if {col1, col2}.issubset(df.columns):
@@ -153,8 +154,9 @@ def employee_summary(df):
 def generate_final_employee_report(df):
     df['transaction_date'] = df['Creation Date'].dt.date
 
-    all_branch_days = sorted(df['transaction_date'].unique())
-    total_branch_days = len(all_branch_days)
+    first_date = df['Creation Date'].min()
+    year, month = first_date.year, first_date.month
+    _, total_branch_days = monthrange(year, month)
 
     # عدد أيام الحضور (بناءً على وجود تحويلات فعلية)
     days_worked = df.groupby('Operator Id')['transaction_date'].nunique().reset_index(name='أيام_العمل')
