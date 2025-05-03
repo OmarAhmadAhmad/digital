@@ -39,20 +39,18 @@ def match_names(df, col1="Receiver Name - WU", col2="Receiver Name - IBAG"):
 def calculate_system_downtime(df):
     df = df.sort_values(by='Creation Date')
     result = []
-
     for day, group in df.groupby('transaction_date'):
         group = group.sort_values('Creation Date')
         group['Prev Time'] = group['Creation Date'].shift(1)
         group['Gap (min)'] = (group['Creation Date'] - group['Prev Time']).dt.total_seconds() / 60
-        downtime_gaps = group[group['Gap (min)'] > 30]['Gap (min)']  # التوقف أكبر من 30 دقيقة
+        downtime_gaps = group[group['Gap (min)'] > 30]['Gap (min)']
         total_downtime_hours = downtime_gaps.sum() / 60
         result.append({
             'تاريخ': day,
             'عدد_مرات_التوقف': downtime_gaps.count(),
             'إجمالي_ساعات_التوقف': round(total_downtime_hours, 2)
         })
-
-    return df
+    return pd.DataFrame(result)
 
 
 
@@ -260,7 +258,7 @@ if uploaded_file:
     employee_report = employee_summary(df)
     client_report = client_behavior_report(df)
     final_emp_report = generate_final_employee_report(df)
-     downtime_report = calculate_system_downtime(df)
+    downtime_report = calculate_system_downtime(df)
 
 
 
