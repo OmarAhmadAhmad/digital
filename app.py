@@ -152,33 +152,29 @@ def employee_summary(df):
 def generate_final_employee_report(df):
     df['transaction_date'] = df['Creation Date'].dt.date
 
-    # عدد أيام العمل
     days_worked = df.groupby('Operator Id')['transaction_date'].nunique().reset_index(name='أيام_العمل')
 
-    # ساعات العمل اليومية
     work_time = df.groupby(['Operator Id', 'transaction_date'])['Creation Date'].agg(['min', 'max']).reset_index()
     work_time['ساعات_اليوم'] = (work_time['max'] - work_time['min']).dt.total_seconds() / 3600
 
     total_hours = work_time.groupby('Operator Id')['ساعات_اليوم'].sum().reset_index(name='إجمالي_الساعات')
 
-    # عدد أيام العمل المتوقعة (استثناء السبت والأحد)
-    all_dates = pd.date_range(start=df['transaction_date'].min(), end=df['transaction_date'].max(), freq='D')
-    work_days = all_dates[all_dates.dayofweek < 5]
-    expected = pd.DataFrame({'Operator Id': df['Operator Id'].unique()})
-    expected['عدد_أيام_العمل_المتوقعة'] = len(work_days)
+    # تعديل عدد أيام الغياب بناءً على الأيام التي لم يعمل فيها الموظف فعلاً
+    all_dates = df['transaction_date'].unique()
+    operator_dates = df.groupby('Operator Id')['transaction_date'].unique().reset_index()
+    operator_dates['أيام_الغياب'] = operator_dates['transaction_date'].apply(lambda x: len(set(all_dates) - set(x)))
 
     report = days_worked.merge(total_hours, on='Operator Id')
-    report = report.merge(expected, on='Operator Id')
-    report['أيام_الغياب'] = report['عدد_أيام_العمل_المتوقعة'] - report['أيام_العمل']
+    report = report.merge(operator_dates[['Operator Id', 'أيام_الغياب']], on='Operator Id')
 
-    # عدد التحويلات
     report['عدد_التحويلات'] = df.groupby('Operator Id').size().reindex(report['Operator Id']).values
-
-    # عدد الحوالات في الساعة
     report['عدد_الحوالات_في_الساعة'] = round(report['عدد_التحويلات'] / report['إجمالي_الساعات'].replace(0, 1), 2)
-
-    # متوسط السرعة في الساعة
     report['متوسط_السرعة_في_الساعة'] = round((report['إجمالي_الساعات'] * 60) / report['عدد_التحويلات'].replace(0, 1), 2)
+
+    total_branch_transfers = report['عدد_التحويلات'].sum()
+    report['نسبة_التحويلات'] = round((report['عدد_التحويلات'] / total_branch_transfers) * 100, 2)
+    total_branch_hours = report['إجمالي_الساعات'].sum()
+    report['نسبة_الساعات'] = round((report['إجمالي_الساعات'] / total_branch_hours) * 100, 2)
 
     final = report.rename(columns={
         'Operator Id': 'الموظف',
@@ -186,16 +182,16 @@ def generate_final_employee_report(df):
     })[[
         'الموظف',
         'عدد_التحويلات',
+        'نسبة_التحويلات',
         'عدد_الحوالات_في_الساعة',
         'متوسط_السرعة_في_الساعة',
         'أيام_العمل',
         'إجمالي ساعات العمل',
+        'نسبة_الساعات',
         'أيام_الغياب'
     ]]
 
     return final
-
-
 
 
 
