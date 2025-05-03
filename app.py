@@ -172,7 +172,7 @@ def branch_summary(df):
     report["high_transfer_days"] = over_300.to_dict(orient="records")
 
     if "Sender Country" in df.columns:
-        top_countries = df["Sender Country"].value_counts().head(10).to_dict()
+        top_countries = df["Sender Country"].value_counts().head(5).to_dict()
     else:
         top_countries = {}
     report["top_5_senders"] = top_countries
