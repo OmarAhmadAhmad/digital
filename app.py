@@ -35,7 +35,7 @@ def match_names(df, col1="Receiver Name - WU", col2="Receiver Name - IBAG"):
     return df
 
 
-def calculate_peak_waiting_time(df):
+def calculate_peak_waiting_time_actual(df):
     df = df.sort_values(by='Creation Date')
     peak_waits = []
 
@@ -44,14 +44,14 @@ def calculate_peak_waiting_time(df):
         count = group.shape[0]
 
         if count <= 300 or count < 2:
-            continue  # تجاهل الأيام غير الذروة أو التي بها تحويلة واحدة فقط
+            continue
 
         start = group['Creation Date'].iloc[0]
         end = group['Creation Date'].iloc[-1]
         total_minutes = (end - start).total_seconds() / 60
 
-        avg_gap = total_minutes / (count - 1)
-        excess_wait = max(avg_gap - 3, 0)
+        expected_minutes = (count - 1) * 1  # دقيقة واحدة لكل تحويل
+        excess_wait = max(total_minutes - expected_minutes, 0)
 
         peak_waits.append(excess_wait)
 
@@ -305,7 +305,7 @@ if uploaded_file:
     st.subheader("🛑 تقرير توقف السيستم")
     st.dataframe(downtime_report, use_container_width=True)
 
-    st.metric("⏱️ متوسط وقت انتظار العملاء في أيام الذروة", f"{avg_peak_wait} دقيقة")
+s    t.metric("⏱️ متوسط وقت انتظار العملاء (فعليًا) في أيام الذروة", f"{avg_peak_wait} دقيقة")
 
 
     
