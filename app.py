@@ -147,6 +147,54 @@ def employee_summary(df):
         }
     return summary
 
+
+def generate_final_employee_report(df):
+    df['transaction_date'] = df['Creation Date'].dt.date
+
+    days_worked = df.groupby('Operator Id')['transaction_date'].nunique().reset_index(name='أيام_العمل')
+
+    work_time = df.groupby(['Operator Id', 'transaction_date'])['Creation Date'].agg(['min', 'max']).reset_index()
+    work_time['ساعات_اليوم'] = (work_time['max'] - work_time['min']).dt.total_seconds() / 3600
+
+    total_hours = work_time.groupby('Operator Id')['ساعات_اليوم'].sum().reset_index(name='إجمالي_الساعات')
+
+    all_dates = pd.date_range(start=df['transaction_date'].min(), end=df['transaction_date'].max(), freq='D')
+    work_days = all_dates[all_dates.dayofweek < 5]
+    expected = pd.DataFrame({'Operator Id': df['Operator Id'].unique()})
+    expected['عدد_أيام_العمل_المتوقعة'] = len(work_days)
+
+    report = days_worked.merge(total_hours, on='Operator Id')
+    report = report.merge(expected, on='Operator Id')
+    report['أيام_الغياب'] = report['عدد_أيام_العمل_المتوقعة'] - report['أيام_العمل']
+
+    report['عدد_التحويلات'] = df.groupby('Operator Id').size().reindex(report['Operator Id']).values
+    report['عدد_الحوالات_في_الساعة'] = round(report['عدد_التحويلات'] / report['إجمالي_الساعات'].replace(0, 1), 2)
+    report['متوسط_السرعة_في_الساعة'] = round((report['إجمالي_الساعات'] * 60) / report['عدد_التحويلات'].replace(0, 1), 2)
+
+    total_branch_transfers = report['عدد_التحويلات'].sum()
+    report['نسبة_التحويلات'] = round((report['عدد_التحويلات'] / total_branch_transfers) * 100, 2)
+    total_branch_hours = report['إجمالي_الساعات'].sum()
+    report['نسبة_الساعات'] = round((report['إجمالي_الساعات'] / total_branch_hours) * 100, 2)
+
+    final = report.rename(columns={
+        'Operator Id': 'الموظف',
+        'إجمالي_الساعات': 'إجمالي ساعات العمل'
+    })[[
+        'الموظف',
+        'عدد_التحويلات',
+        'نسبة_التحويلات',
+        'عدد_الحوالات_في_الساعة',
+        'متوسط_السرعة_في_الساعة',
+        'أيام_العمل',
+        'إجمالي ساعات العمل',
+        'نسبة_الساعات',
+        'أيام_الغياب'
+    ]]
+
+    return final
+
+
+
 def client_behavior_report(df):
     report = {}
 
@@ -182,6 +230,26 @@ if uploaded_file:
     branch_report = branch_summary(df)
     employee_report = employee_summary(df)
     client_report = client_behavior_report(df)
+
+
+    final_emp_report = generate_final_employee_report(df)
+
+    st.subheader("📈 التقرير التفصيلي")
+    st.dataframe(final_emp_report, use_container_width=True)
+
+    st.subheader("📊 مقارنة النسب بين الموظفين")
+    fig, ax = plt.subplots(figsize=(10, 5))
+    ax.bar(final_emp_report['الموظف'], final_emp_report['نسبة_التحويلات'], label='نسبة التحويلات')
+    ax.bar(final_emp_report['الموظف'], final_emp_report['نسبة_الساعات'], bottom=0, alpha=0.5, label='نسبة الساعات')
+    ax.set_ylabel("النسبة (%)")
+    ax.set_title("نسبة التحويلات والساعات لكل موظف")
+    ax.legend()
+    plt.xticks(rotation=45)
+    st.pyplot(fig)
+
+
+
+
 
     st.markdown("""<h2 style='text-align: right;'>🏅 الموظف المثالي</h2>""", unsafe_allow_html=True)
     emp_df = pd.DataFrame.from_dict(employee_report, orient="index").reset_index().rename(columns={"index": "اسم الموظف"})
