@@ -35,35 +35,28 @@ def match_names(df, col1="Receiver Name - WU", col2="Receiver Name - IBAG"):
     return df
 
 
-def calculate_waiting_time_split(df):
+def calculate_peak_waiting_time(df):
     df = df.sort_values(by='Creation Date')
-    result_peak = []
-    result_normal = []
+    peak_waits = []
 
     for day, group in df.groupby('transaction_date'):
         group = group.sort_values('Creation Date')
         count = group.shape[0]
 
-        if count < 2:
-            continue
+        if count <= 300 or count < 2:
+            continue  # تجاهل الأيام غير الذروة أو التي بها تحويلة واحدة فقط
 
         start = group['Creation Date'].iloc[0]
         end = group['Creation Date'].iloc[-1]
         total_minutes = (end - start).total_seconds() / 60
+
         avg_gap = total_minutes / (count - 1)
         excess_wait = max(avg_gap - 3, 0)
 
-        if count > 300:
-            result_peak.append(excess_wait)
-        else:
-            result_normal.append(excess_wait)
+        peak_waits.append(excess_wait)
 
-    avg_peak = round(sum(result_peak) / len(result_peak), 2) if result_peak else 0
-    avg_normal = round(sum(result_normal) / len(result_normal), 2) if result_normal else 0
-
-    return avg_peak, avg_normal
-
-
+    avg_peak_wait = int(round(sum(peak_waits) / len(peak_waits))) if peak_waits else 0
+    return avg_peak_wait
 
 
 
@@ -299,7 +292,7 @@ if uploaded_file:
     client_report = client_behavior_report(df)
     final_emp_report = generate_final_employee_report(df)
     downtime_report = calculate_system_downtime(df)
-    avg_peak, avg_normal = calculate_waiting_time_split(df)
+    avg_peak_wait = calculate_peak_waiting_time(df)
 
 
 
@@ -312,8 +305,8 @@ if uploaded_file:
     st.subheader("🛑 تقرير توقف السيستم")
     st.dataframe(downtime_report, use_container_width=True)
 
-    st.metric("⏳ وقت الانتظار في أيام الذروة", f"{avg_peak} دقيقة")
-    st.metric("⏳ وقت الانتظار في الأيام العادية", f"{avg_normal} دقيقة")
+    st.metric("⏱️ متوسط وقت انتظار العملاء في أيام الذروة", f"{avg_peak_wait} دقيقة")
+
 
     
     st.markdown("""<h2 style='text-align: right;'>🏅 الموظف المثالي</h2>""", unsafe_allow_html=True)
