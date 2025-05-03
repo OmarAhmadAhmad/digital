@@ -386,7 +386,7 @@ if uploaded_file:
 
 
     
-    # st.markdown(f"### 💰 إجمالي المبلغ المدفوع: **{branch_report['total_amount']:.2f} دولار**")
+    st.markdown(f"### 💰 إجمالي المبلغ المدفوع: **{branch_report['total_amount']:.2f} دولار**")
 
     st.markdown("""<h2 style='text-align: right;'>👤 تحليل العملاء</h2>""", unsafe_allow_html=True)
     tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(["ذو مخاطر عالية", "الأكثر استلامًا", "الأعلى مبالغ", "أكثر من 3 راسلين", "تشابه الأسماء", "تصنيف أسماء الراسلين"])
