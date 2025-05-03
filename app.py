@@ -149,6 +149,7 @@ def employee_summary(df):
 
 
 
+
 def generate_final_employee_report(df):
     df['transaction_date'] = df['Creation Date'].dt.date
 
@@ -192,6 +193,9 @@ def generate_final_employee_report(df):
 
     return final
 
+
+
+
 def client_behavior_report(df):
     report = {}
 
@@ -230,18 +234,6 @@ if uploaded_file:
     final_emp_report = generate_final_employee_report(df)
     st.subheader("📈 تقرير الأداء التفصيلي")
     st.dataframe(final_emp_report, use_container_width=True)
-    st.subheader("📊 مقارنة النسب بين الموظفين")
-    fig, ax = plt.subplots(figsize=(10, 5))
-    ax.bar(final_emp_report['الموظف'], final_emp_report['نسبة_التحويلات'], label='نسبة التحويلات')
-    ax.bar(final_emp_report['الموظف'], final_emp_report['نسبة_الساعات'], bottom=0, alpha=0.5, label='نسبة الساعات')
-    ax.set_ylabel("النسبة (%)")
-    ax.set_title("نسبة التحويلات والساعات لكل موظف")
-    ax.legend()
-    plt.xticks(rotation=45)
-    st.pyplot(fig)
-
-
-
     
     st.markdown("""<h2 style='text-align: right;'>🏅 الموظف المثالي</h2>""", unsafe_allow_html=True)
     emp_df = pd.DataFrame.from_dict(employee_report, orient="index").reset_index().rename(columns={"index": "اسم الموظف"})
