@@ -52,7 +52,7 @@ def calculate_system_downtime(df):
             'إجمالي_ساعات_التوقف': round(total_downtime_hours, 2)
         })
 
-    return pd.DataFrame(result)
+    return df
 
 
 
