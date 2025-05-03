@@ -97,13 +97,6 @@ def calculate_system_downtime(df):
 
 
 
-
-
-
-
-
-
-
 def classify_names(df, name_column='Sender Full Name'):
     ignore_words = ['Abu', 'Abdallah', 'Abdul', 'Abo', 'Abdel', 'Dr', 'Mr', 'Sir', 'Jr', 'Sr', 'FR']
 
@@ -171,13 +164,6 @@ def branch_summary(df):
     report = {}
     report["unique_customers"] = df["Receiver Name - WU"].nunique()
     report["total_transfers"] = len(df)
-    app_count = df[df["System"] == "App"].shape[0]
-    total_count = df.shape[0]
-    app_ratio = round((app_count / total_count) * 100, 2)
-
-    report["app_transfer_count"] = app_count
-    report["app_transfer_ratio"] = app_ratio
-
     day_stats = df.groupby("transaction_date").agg({
         "MTCN": "count",
         "Operator Id": lambda x: x.unique().tolist()
@@ -321,13 +307,7 @@ if uploaded_file:
     st.dataframe(downtime_report, use_container_width=True)
 
     st.markdown("### 📊 تفاصيل أيام الذروة وزمن الانتظار")
-    st.dataframe(peak_waiting_detail, use_container_width=True)
-
-    st.metric("📱 عدد تحويلات App", branch_report["app_transfer_count"])
-    st.metric("📊 نسبة تحويلات App", f"{branch_report['app_transfer_ratio']}%")
-
-
-    
+    st.dataframe(peak_waiting_detail, use_container_width=True)    
     
     st.markdown("""<h2 style='text-align: right;'>🏅 الموظف المثالي</h2>""", unsafe_allow_html=True)
     emp_df = pd.DataFrame.from_dict(employee_report, orient="index").reset_index().rename(columns={"index": "اسم الموظف"})
