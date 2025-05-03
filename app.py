@@ -156,26 +156,39 @@ def generate_final_employee_report(df):
     all_branch_days = sorted(df['transaction_date'].unique())
     total_branch_days = len(all_branch_days)
 
+    # عدد أيام الحضور (بناءً على وجود تحويلات فعلية)
     days_worked = df.groupby('Operator Id')['transaction_date'].nunique().reset_index(name='أيام_العمل')
 
+    # حساب عدد الساعات لكل يوم لكل موظف
     work_time = df.groupby(['Operator Id', 'transaction_date'])['Creation Date'].agg(['min', 'max']).reset_index()
     work_time['ساعات_اليوم'] = (work_time['max'] - work_time['min']).dt.total_seconds() / 3600
 
+    # تجميع إجمالي الساعات لكل موظف
     total_hours = work_time.groupby('Operator Id')['ساعات_اليوم'].sum().reset_index(name='إجمالي_الساعات')
 
+    # دمج بيانات الحضور والساعات
     report = days_worked.merge(total_hours, on='Operator Id')
+
+    # حساب أيام الغياب = إجمالي أيام العمل - أيام الحضور
     report['أيام_الغياب'] = total_branch_days - report['أيام_العمل']
 
+    # عدد التحويلات
     report['عدد_التحويلات'] = df.groupby('Operator Id').size().reindex(report['Operator Id']).fillna(0).astype(int).values
+
+    # عدد الحوالات في الساعة
     report['عدد_الحوالات_في_الساعة'] = (report['عدد_التحويلات'] / report['إجمالي_الساعات'].replace(0, 1)).round().astype(int)
+
+    # متوسط السرعة في الساعة
     report['متوسط_السرعة_في_الساعة'] = ((report['إجمالي_الساعات'] * 60) / report['عدد_التحويلات'].replace(0, 1)).round().astype(int)
 
+    # النسب مقارنة بالفرع
     total_branch_transfers = report['عدد_التحويلات'].sum()
     report['نسبة_التحويلات'] = ((report['عدد_التحويلات'] / total_branch_transfers) * 100).round().astype(int)
 
     total_branch_hours = report['إجمالي_الساعات'].sum()
     report['نسبة_الساعات'] = ((report['إجمالي_الساعات'] / total_branch_hours) * 100).round().astype(int)
 
+    # إعادة التسمية واختيار الأعمدة النهائية
     final = report.rename(columns={
         'Operator Id': 'الموظف',
         'إجمالي_الساعات': 'إجمالي ساعات العمل'
@@ -192,6 +205,7 @@ def generate_final_employee_report(df):
     ]]
 
     return final
+
 
 
 
@@ -232,6 +246,8 @@ if uploaded_file:
     employee_report = employee_summary(df)
     client_report = client_behavior_report(df)
     final_emp_report = generate_final_employee_report(df)
+    
+    
     st.subheader("📈 تقرير الأداء التفصيلي")
     st.dataframe(final_emp_report, use_container_width=True)
     
