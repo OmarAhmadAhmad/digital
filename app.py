@@ -154,9 +154,9 @@ def employee_summary(df):
 def generate_final_employee_report(df):
     df['transaction_date'] = df['Creation Date'].dt.date
 
-    first_date = df['Creation Date'].min()
-    year, month = first_date.year, first_date.month
-    _, total_branch_days = monthrange(year, month)
+    start_date = df['Creation Date'].min().normalize()
+    end_date = df['Creation Date'].max().normalize()
+    total_branch_days = pd.date_range(start=start_date, end=end_date, freq='D').nunique()
 
     # عدد أيام الحضور (بناءً على وجود تحويلات فعلية)
     days_worked = df.groupby('Operator Id')['transaction_date'].nunique().reset_index(name='أيام_العمل')
