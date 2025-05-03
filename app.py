@@ -45,18 +45,16 @@ def calculate_system_downtime(df):
         group['Gap (min)'] = (group['Creation Date'] - group['Prev Time']).dt.total_seconds() / 60
         downtime_gaps = group[group['Gap (min)'] > 30]['Gap (min)']
         total_downtime_hours = downtime_gaps.sum() / 60
-        num_transfers = group.shape[0]
-        is_peak = num_transfers > 300
-        day_name = group['day_of_week'].iloc[0] if 'day_of_week' in group.columns else pd.to_datetime(day).day_name()
         result.append({
             'تاريخ': day,
-            'اسم اليوم': day_name,
-            'عدد_التحويلات': num_transfers,
-            'يوم_ذروة': 'نعم' if is_peak else 'لا',
             'عدد_مرات_التوقف': downtime_gaps.count(),
             'إجمالي_ساعات_التوقف': round(total_downtime_hours, 2)
         })
-    return pd.DataFrame(result)
+    
+    # تصفية الأيام التي لا يوجد بها توقف
+    result_df = pd.DataFrame(result)
+    result_df = result_df[result_df['عدد_مرات_التوقف'] > 0]
+    return result_df
 
 
 
