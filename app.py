@@ -3,9 +3,6 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from datetime import time
 from rapidfuzz import fuzz
-import os
-
-
 
 def match_names(df, col1="Receiver Name - WU", col2="Receiver Name - IBAG"):
     if {col1, col2}.issubset(df.columns):
@@ -65,28 +62,8 @@ def add_transfer_duration(df):
     return df
 
 def prepare_data(file):
-    file_ext = os.path.splitext(file.name)[1].lower()
+    df = pd.read_excel(file)
 
-    try:
-        if file_ext == ".xls":
-            df = pd.read_excel(file, engine="xlrd", header=None)
-        elif file_ext == ".xlsx":
-            df = pd.read_excel(file, engine="openpyxl", header=None)
-        elif file_ext == ".csv":
-            df = pd.read_csv(file, header=None, encoding='utf-8')  # استخدم encoding مناسب حسب الملف
-        else:
-            st.error("نوع الملف غير مدعوم. يرجى رفع ملف بامتداد xls أو xlsx أو csv.")
-            st.stop()
-    except Exception as e:
-        st.error(f"حدث خطأ أثناء قراءة الملف: {e}")
-        st.stop()
-
-    # 👇 نفس المعالجة السابقة
-    for i, row in df.iterrows():
-        if 'Creation Date' in row.values:
-            df.columns = row
-            df = df[i+1:].reset_index(drop=True)
-            break
     if "Sender Mobile Number" in df.columns:
         df["Sender Mobile Number"] = df["Sender Mobile Number"].astype(str)
 
@@ -107,25 +84,9 @@ def prepare_data(file):
         )
     else:
         df['System'] = 'Unknown'
-   
-    # 1. تحويل العمود لأرقام (أي قيمة غير رقمية تتحوّل إلى NaN)
-    df['Actual Payout Amount'] = pd.to_numeric(df['Actual Payout Amount'], errors='coerce')
 
-# 2. حذف الصفوف اللي فيها قيم NaN في العمود ده
-    df = df.dropna(subset=['Actual Payout Amount'])
-
-# 3. تعريف الفئات (bins) والتصنيفات (labels)
-    bins = [0, 1000, 2000, 3000, 5000, float('inf')]
-    labels = ['0-999', '1000-1999', '2000-2999', '3000-4999', 'Over 5000']
-
-# 4. تطبيق التصنيف باستخدام pd.cut
-    df['Amount_range'] = pd.cut(
-        df['Actual Payout Amount'],
-        bins=bins,
-        labels=labels,
-        right=False  # ده معناه إن 5000 هتدخل في "Over 5000"
-    )
-
+    df['Amount_range'] = pd.cut(df['Actual Payout Amount'], bins=[0, 1000, 2000, 3000, 4999, float('inf')],
+                                labels=['Limit_1000', 'Limit_2000', 'Limit_3000', 'Limit_5000', 'over_limit'])
 
     df['Sender Name Count'] = df.groupby('Sender Full Name')['Sender Full Name'].transform('count')
 
@@ -167,8 +128,8 @@ def employee_summary(df):
         first_transactions = emp_df.groupby("transaction_date")["Creation Date"].min()
         first_transactions = pd.Series(first_transactions.values, index=pd.to_datetime(first_transactions.index))
 
-        on_time_morning = first_transactions.between_time("08:30", "08:46").count()
-        on_time_evening = first_transactions.between_time("13:30", "13:46").count()
+        on_time_morning = first_transactions.between_time("08:30", "08:45").count()
+        on_time_evening = first_transactions.between_time("13:30", "13:45").count()
         on_time_days = on_time_morning + on_time_evening
         commitment_score = on_time_days * 1
 
@@ -214,7 +175,7 @@ st.markdown("""
     <h1 style='text-align: right;'>لوحة تحكم أداء الفرع والموظفين</h1>
 """, unsafe_allow_html=True)
 
-uploaded_file = st.file_uploader("📂 ارفع ملف Excel", type=["xlsx","xls"])
+uploaded_file = st.file_uploader("📂 ارفع ملف Excel", type="xlsx")
 
 if uploaded_file:
     df = prepare_data(uploaded_file)
