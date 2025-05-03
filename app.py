@@ -159,22 +159,23 @@ def generate_final_employee_report(df):
 
     total_hours = work_time.groupby('Operator Id')['ساعات_اليوم'].sum().reset_index(name='إجمالي_الساعات')
 
-    # تعديل عدد أيام الغياب بناءً على الأيام التي لم يعمل فيها الموظف فعلاً
-    all_dates = df['transaction_date'].unique()
-    operator_dates = df.groupby('Operator Id')['transaction_date'].unique().reset_index()
-    operator_dates['أيام_الغياب'] = operator_dates['transaction_date'].apply(lambda x: len(set(all_dates) - set(x)))
+    all_branch_days = sorted(df['transaction_date'].drop_duplicates())
+    operator_dates = df.groupby('Operator Id')['transaction_date'].apply(lambda x: set(x)).reset_index()
+    operator_dates['أيام_الغياب'] = operator_dates['transaction_date'].apply(
+        lambda x: len(set(all_branch_days) - x)
+    )
 
     report = days_worked.merge(total_hours, on='Operator Id')
     report = report.merge(operator_dates[['Operator Id', 'أيام_الغياب']], on='Operator Id')
 
     report['عدد_التحويلات'] = df.groupby('Operator Id').size().reindex(report['Operator Id']).values
-    report['عدد_الحوالات_في_الساعة'] = round(report['عدد_التحويلات'] / report['إجمالي_الساعات'].replace(0, 1), 2)
-    report['متوسط_السرعة_في_الساعة'] = round((report['إجمالي_الساعات'] * 60) / report['عدد_التحويلات'].replace(0, 1), 2)
+    report['عدد_الحوالات_في_الساعة'] = round(report['عدد_التحويلات'] / report['إجمالي_الساعات'].replace(0, 1)).astype(int)
+    report['متوسط_السرعة_في_الساعة'] = round((report['إجمالي_الساعات'] * 60) / report['عدد_التحويلات'].replace(0, 1)).astype(int)
 
     total_branch_transfers = report['عدد_التحويلات'].sum()
-    report['نسبة_التحويلات'] = round((report['عدد_التحويلات'] / total_branch_transfers) * 100, 2)
+    report['نسبة_التحويلات'] = round((report['عدد_التحويلات'] / total_branch_transfers) * 100).astype(int)
     total_branch_hours = report['إجمالي_الساعات'].sum()
-    report['نسبة_الساعات'] = round((report['إجمالي_الساعات'] / total_branch_hours) * 100, 2)
+    report['نسبة_الساعات'] = round((report['إجمالي_الساعات'] / total_branch_hours) * 100).astype(int)
 
     final = report.rename(columns={
         'Operator Id': 'الموظف',
@@ -192,7 +193,6 @@ def generate_final_employee_report(df):
     ]]
 
     return final
-
 
 
 def client_behavior_report(df):
