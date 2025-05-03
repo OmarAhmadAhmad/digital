@@ -241,7 +241,7 @@ if uploaded_file:
         labels = ['أيام الحضور', 'أيام الغياب']
         sizes = [row['أيام_العمل'], row['أيام_الغياب']]
         fig, ax = plt.subplots()
-        ax.pie(sizes, labels=labels, autopct='%1.1f%%', startangle=90)
+        ax.pie(sizes, labels=labels, autopct='%1.1f%%', startangle=25)
         ax.axis('equal')
         st.markdown(f"#### {row['الموظف']}")
         st.pyplot(fig)
