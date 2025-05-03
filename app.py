@@ -35,6 +35,37 @@ def match_names(df, col1="Receiver Name - WU", col2="Receiver Name - IBAG"):
     return df
 
 
+def calculate_waiting_time_per_day(df):
+    df = df.sort_values(by='Creation Date')
+    results = []
+
+    for day, group in df.groupby('transaction_date'):
+        group = group.sort_values('Creation Date')
+        count = group.shape[0]
+        if count < 2:
+            continue
+
+        start = group['Creation Date'].iloc[0]
+        end = group['Creation Date'].iloc[-1]
+        total_minutes = (end - start).total_seconds() / 60
+
+        avg_gap = total_minutes / (count - 1)
+        excess_wait = max(avg_gap - 3, 0)  # نخصم الـ 3 دقائق الطبيعية
+
+        results.append(excess_wait)
+
+    if results:
+        overall_avg_excess_wait = round(sum(results) / len(results), 2)
+    else:
+        overall_avg_excess_wait = 0
+
+    return overall_avg_excess_wait
+
+
+
+
+
+
 
 def calculate_system_downtime(df):
     df = df.sort_values(by='Creation Date')
@@ -268,6 +299,7 @@ if uploaded_file:
     client_report = client_behavior_report(df)
     final_emp_report = generate_final_employee_report(df)
     downtime_report = calculate_system_downtime(df)
+    avg_extra_wait = calculate_waiting_time_per_day(df)
 
 
 
@@ -279,6 +311,7 @@ if uploaded_file:
     st.subheader("🛑 تقرير توقف السيستم")
     st.dataframe(downtime_report, use_container_width=True)
 
+    st.metric("⏳ متوسط وقت الانتظار الزائد", f"{avg_extra_wait} دقيقة (فوق الـ 3 دقائق)")
 
     st.markdown("""<h2 style='text-align: right;'>🏅 الموظف المثالي</h2>""", unsafe_allow_html=True)
     emp_df = pd.DataFrame.from_dict(employee_report, orient="index").reset_index().rename(columns={"index": "اسم الموظف"})
