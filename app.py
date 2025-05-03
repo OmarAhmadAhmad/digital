@@ -235,19 +235,6 @@ if uploaded_file:
     
     st.subheader("📈 تقرير الأداء التفصيلي")
     st.dataframe(final_emp_report, use_container_width=True)
-
-    st.subheader("📊 توزيع الحضور والغياب")
-    for index, row in final_emp_report.iterrows():
-        labels = ['أيام الحضور', 'أيام الغياب']
-        sizes = [row['أيام_العمل'], row['أيام_الغياب']]
-        fig, ax = plt.subplots()
-        ax.pie(sizes, labels=labels, autopct='%1.1f%%', startangle=25)
-        ax.axis('equal')
-        st.markdown(f"#### {row['الموظف']}")
-        st.pyplot(fig)
-
-
-
     
     st.markdown("""<h2 style='text-align: right;'>🏅 الموظف المثالي</h2>""", unsafe_allow_html=True)
     emp_df = pd.DataFrame.from_dict(employee_report, orient="index").reset_index().rename(columns={"index": "اسم الموظف"})
