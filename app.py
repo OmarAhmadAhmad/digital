@@ -128,7 +128,7 @@ def add_transfer_duration(df):
 def prepare_data(file):
     REQUIRED_COLUMNS = ['Creation Date', 'Payout Time', 'Actual Payout Amount', 'Sender Full Name', 'TRX Type']
 
-def read_file_with_auto_header(file):
+    # قراءة الملف بشكل أولي لتحديد صف الأعمدة
     if file.name.endswith('.csv'):
         df_preview = pd.read_csv(file, header=None)
         file.seek(0)
@@ -138,33 +138,20 @@ def read_file_with_auto_header(file):
     else:
         raise ValueError("صيغة الملف غير مدعومة")
 
-    # البحث عن صف الأعمدة
+    header_row = None
     for i, row in df_preview.iterrows():
         if all(col in row.values for col in REQUIRED_COLUMNS):
             header_row = i
             break
-    else:
-        raise ValueError("لم يتم العثور على الأعمدة المطلوبة")
+    if header_row is None:
+        raise ValueError("❌ لم يتم العثور على الأعمدة المطلوبة في الملف")
 
-    # إعادة القراءة من الصف الصحيح
+    # قراءة البيانات الحقيقية
     if file.name.endswith('.csv'):
         df = pd.read_csv(file, skiprows=header_row)
     else:
         df = pd.read_excel(file, skiprows=header_row)
-
-    return df
-
-  
-
-    df = pd.read_excel(file)
-    if file.name.endswith('.csv'):
-        df = pd.read_csv(file)
-    elif file.name.endswith('.xls'):
-        df = pd.read_excel(file, engine='xlrd')
-    elif file.name.endswith('.xlsx'):
-        df = pd.read_excel(file, engine='openpyxl')
-    else:
-        raise ValueError("صيغة غير مدعومة. الصيغ المدعومة: .csv, .xls, .xlsx")
+    
 
     if "Sender Mobile Number" in df.columns:
         df["Sender Mobile Number"] = df["Sender Mobile Number"].astype(str)
