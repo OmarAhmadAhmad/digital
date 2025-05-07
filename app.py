@@ -126,6 +126,34 @@ def add_transfer_duration(df):
     return df
 
 def prepare_data(file):
+    REQUIRED_COLUMNS = ['Creation Date', 'Payout Time', 'Actual Payout Amount', 'Sender Full Name', 'TRX Type']
+
+def read_file_with_auto_header(file):
+    if file.name.endswith('.csv'):
+        df_preview = pd.read_csv(file, header=None)
+        file.seek(0)
+    elif file.name.endswith(('.xls', '.xlsx')):
+        df_preview = pd.read_excel(file, header=None)
+        file.seek(0)
+    else:
+        raise ValueError("صيغة الملف غير مدعومة")
+
+    # البحث عن صف الأعمدة
+    for i, row in df_preview.iterrows():
+        if all(col in row.values for col in REQUIRED_COLUMNS):
+            header_row = i
+            break
+    else:
+        raise ValueError("لم يتم العثور على الأعمدة المطلوبة")
+
+    # إعادة القراءة من الصف الصحيح
+    if file.name.endswith('.csv'):
+        df = pd.read_csv(file, skiprows=header_row)
+    else:
+        df = pd.read_excel(file, skiprows=header_row)
+
+    return df
+
   
 
     df = pd.read_excel(file)
