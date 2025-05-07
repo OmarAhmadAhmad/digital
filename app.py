@@ -320,7 +320,7 @@ st.markdown("""
     <h1 style='text-align: right;'>لوحة تحكم أداء الفرع والموظفين</h1>
 """, unsafe_allow_html=True)
 
-uploaded_file = st.file_uploader("📂 ارفع ملف Excel", type="xlsx")
+uploaded_file = st.file_uploader("Upload file", type=["csv", "xlsx", "xls"])
 
 if uploaded_file:
     df = prepare_data(uploaded_file)
