@@ -129,8 +129,14 @@ def prepare_data(file):
   
 
     df = pd.read_excel(file)
-    if not (file.name.endswith('.xlsx') or file.name.endswith('.xls')):
-        raise ValueError("الملف يجب أن يكون بصيغة .xlsx أو .xls")
+    if file.name.endswith('.csv'):
+        df = pd.read_csv(file)
+    elif file.name.endswith('.xls'):
+        df = pd.read_excel(file, engine='xlrd')
+    elif file.name.endswith('.xlsx'):
+        df = pd.read_excel(file, engine='openpyxl')
+    else:
+        raise ValueError("صيغة غير مدعومة. الصيغ المدعومة: .csv, .xls, .xlsx")
 
     if "Sender Mobile Number" in df.columns:
         df["Sender Mobile Number"] = df["Sender Mobile Number"].astype(str)
