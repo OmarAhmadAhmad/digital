@@ -126,10 +126,11 @@ def add_transfer_duration(df):
     return df
 
 def prepare_data(file):
-     if not (file.name.endswith('.xlsx') or file.name.endswith('.xls')):
-        raise ValueError("الملف يجب أن يكون بصيغة .xlsx أو .xls")
+  
 
     df = pd.read_excel(file)
+    if not (file.name.endswith('.xlsx') or file.name.endswith('.xls')):
+        raise ValueError("الملف يجب أن يكون بصيغة .xlsx أو .xls")
 
     if "Sender Mobile Number" in df.columns:
         df["Sender Mobile Number"] = df["Sender Mobile Number"].astype(str)
