@@ -331,11 +331,44 @@ def client_behavior_report(df):
 # ==================== Streamlit ====================
 
 st.set_page_config(layout="wide")
+# تصميم عصري 2025
+st.markdown("""
+    <style>
+    html, body, [class*="css"] {
+        font-family: 'Segoe UI', sans-serif;
+        background-color: #f9fbfd;
+        color: #1f2937;
+    }
+    h1, h2, h3 {
+        color: #0f172a;
+    }
+    .stButton>button {
+        color: white;
+        background: linear-gradient(to right, #4f46e5, #3b82f6);
+        border-radius: 8px;
+        padding: 0.6em 1.2em;
+
 st.markdown("""
     <h1 style='text-align: right;'>لوحة تحكم أداء الفرع والموظفين</h1>
 """, unsafe_allow_html=True)
 
 uploaded_file = st.file_uploader("Upload file", type=["csv", "xlsx", "xls"])
+st.sidebar.title("📂 الفلترة")
+system_filter = st.sidebar.multiselect("اختر النظام", ["App", "WC", "Other"])
+name_filter = st.sidebar.text_input("🔍 بحث بالاسم")
+
+if uploaded_file:
+    df = prepare_data(uploaded_file)
+
+    if system_filter:
+        df = df[df["System"].isin(system_filter)]
+    if name_filter:
+        df = df[df["Receiver Name - WU"].str.contains(name_filter, case=False, na=False)]
+
+    # باقي الكود...
+
+
+
 
 if uploaded_file:
     df = prepare_data(uploaded_file)
@@ -388,15 +421,30 @@ if uploaded_file:
     st.dataframe(emp_df.sort_values("مؤشر الأداء", ascending=False), use_container_width=True)
 
     st.markdown("""<h2 style='text-align: right;'>🏢 تقرير الفرع</h2>""", unsafe_allow_html=True)
-    col1, col2 = st.columns(2)
-    col1.metric("عدد عملاء الفرع", branch_report["unique_customers"])
-    col2.metric("إجمالي عدد التحويلات", branch_report["total_transfers"])
+    col1, col2, col3, col4 = st.columns(4)
+    col1.metric("📦 إجمالي التحويلات", f"{branch_report['total_transfers']:,}")
+    col2.metric("👥 عدد العملاء", f"{branch_report['unique_customers']:,}")
+    col3.metric("💰 إجمالي المبلغ", f"${branch_report['total_amount']:,.2f}")
+    col4.metric("📱 تحويلات App", f"{branch_report['app_stats']['النسبة']}%")
+
+
+    
+    # col1, col2 = st.columns(2)
+    # col1.metric("عدد عملاء الفرع", branch_report["unique_customers"])
+    # col2.metric("إجمالي عدد التحويلات", branch_report["total_transfers"])
 
     # with st.expander("📊 التحويلات حسب النظام"):
     #     system_df = pd.DataFrame(branch_report["transfers_by_system"].items(), columns=["النظام", "عدد التحويلات"])
     #     st.dataframe(system_df.style.set_table_styles([{ 'selector': 'th', 'props': [('text-align', 'right')] }]), use_container_width=True)
     st.metric("عدد تحويلات App", branch_report["app_stats"]["عدد"])
     st.metric("نسبة تحويلات App", f"{branch_report['app_stats']['النسبة']}%")
+    st.markdown("## 🧠 توصيات ذكية")
+    if branch_report["app_stats"]["النسبة"] < 40:
+         st.warning("📉 معدل تحويلات التطبيق منخفض، يُوصى بتحفيز العملاء على استخدام القنوات الرقمية.")
+
+    if ideal_emp['مؤشر الأداء'] < 70:
+        st.info("⚠️ لا يوجد أداء استثنائي بارز هذا الشهر. راجع جدول الالتزام وأيام النشاط العالي.")
+
 
     # st.markdown("#### أعلى 5 دول مرسلة")
     # countries_df = pd.DataFrame(branch_report["top_5_senders"].items(), columns=["الدولة", "عدد التحويلات"])
