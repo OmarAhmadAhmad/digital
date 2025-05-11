@@ -343,9 +343,21 @@ if uploaded_file:
 
 
 
-    
-    st.subheader("📈 تقرير الأداء التفصيلي")
-    st.dataframe(final_emp_report, use_container_width=True)
+    st.markdown("## 📊 تقرير الأداء التفصيلي", unsafe_allow_html=True)
+
+    st.dataframe(
+        final_emp_report.style.set_properties(**{
+        'background-color': '#ffffff',
+        'color': '#2c3e50',
+        'border-color': '#dee2e6',
+        'font-size': '14px',
+        'text-align': 'center'
+    }),
+    use_container_width=True
+)
+
+    # st.subheader("📈 تقرير الأداء التفصيلي")
+    # st.dataframe(final_emp_report, use_container_width=True)
  
    
 
