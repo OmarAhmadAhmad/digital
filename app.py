@@ -266,26 +266,46 @@ def employee_summary(df):
 def generate_final_employee_report(df):
     df['transaction_date'] = df['Creation Date'].dt.date
 
+    # زمن الانتظار بين التحويلات
+    df = df.sort_values(by=['Operator Id', 'Creation Date'])
+    df['زمن_الانتظار'] = df.groupby('Operator Id')['Creation Date'].diff().dt.total_seconds().div(60).fillna(0)
+
+    avg_wait = df.groupby('Operator Id')['زمن_الانتظار'].mean().reset_index(name='متوسط_زمن_الانتظار')
+
+    # جميع أيام الفرع
     all_branch_days = sorted(df['transaction_date'].unique())
     total_branch_days = len(all_branch_days)
 
+    # حساب أيام العمل
     days_worked = df.groupby('Operator Id')['transaction_date'].nunique().reset_index(name='أيام_العمل')
 
+    # حساب إجمالي ساعات العمل
     work_time = df.groupby(['Operator Id', 'transaction_date'])['Creation Date'].agg(['min', 'max']).reset_index()
     work_time['ساعات_اليوم'] = (work_time['max'] - work_time['min']).dt.total_seconds() / 3600
-
     total_hours = work_time.groupby('Operator Id')['ساعات_اليوم'].sum().reset_index(name='إجمالي_الساعات')
 
+    # عدد التحويلات لكل موظف
     report = days_worked.merge(total_hours, on='Operator Id')
     report['أيام_الغياب'] = total_branch_days - report['أيام_العمل']
-
     report['عدد_التحويلات'] = df.groupby('Operator Id').size().reindex(report['Operator Id']).fillna(0).astype(int).values
     report['عدد_الحوالات_في_الساعة'] = (report['عدد_التحويلات'] / report['إجمالي_الساعات'].replace(0, 1)).round().astype(int)
     report['متوسط_السرعة_في_الساعة'] = ((report['إجمالي_الساعات'] * 60) / report['عدد_التحويلات'].replace(0, 1)).round().astype(int)
 
+    # نسبة تحويلات الموظف من إجمالي الفرع
     total_branch_transfers = report['عدد_التحويلات'].sum()
     report['نسبة_التحويلات'] = ((report['عدد_التحويلات'] / total_branch_transfers) * 100).round().astype(int)
 
+    # عدد أيام النشاط العالي (>80 تحويل في اليوم)
+    daily_counts = df.groupby(['Operator Id', 'transaction_date']).size().reset_index(name='عدد_تحويلات_اليوم')
+    high_activity = daily_counts[daily_counts['عدد_تحويلات_اليوم'] > 80]
+    high_activity_days = high_activity.groupby('Operator Id').size().reset_index(name='أيام_نشاط_عالي')
+
+    # دمج التقارير
+    report = report.merge(avg_wait, on='Operator Id', how='left')
+    report = report.merge(high_activity_days, on='Operator Id', how='left')
+    report['أيام_نشاط_عالي'] = report['أيام_نشاط_عالي'].fillna(0).astype(int)
+
+    # تنسيق الأعمدة النهائية
     final = report.rename(columns={
         'Operator Id': 'الموظف',
         'إجمالي_الساعات': 'إجمالي ساعات العمل'
@@ -295,12 +315,15 @@ def generate_final_employee_report(df):
         'نسبة_التحويلات',
         'عدد_الحوالات_في_الساعة',
         'متوسط_السرعة_في_الساعة',
+        'متوسط_زمن_الانتظار',
         'أيام_العمل',
         'إجمالي ساعات العمل',
-        'أيام_الغياب'
+        'أيام_الغياب',
+        'أيام_نشاط_عالي'
     ]]
 
     return final
+
 
 
 
