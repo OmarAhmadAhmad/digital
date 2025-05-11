@@ -404,6 +404,7 @@ if uploaded_file:
     final_emp_report = generate_final_employee_report(df)
     downtime_report = calculate_system_downtime(df)
     peak_waiting_detail = detailed_peak_waiting_report(df)
+    df_result = calculate_ideal_employee_score(df)
 
 
 
@@ -411,7 +412,7 @@ if uploaded_file:
 
     
     st.subheader("📈 تقرير الأداء التفصيلي")
-    st.dataframe(final_emp_report, use_container_width=True)
+    st.dataframe(final_emp_report,df_result, use_container_width=True)
 
     st.subheader("🛑 تقرير توقف السيستم")
     st.dataframe(downtime_report, use_container_width=True)
