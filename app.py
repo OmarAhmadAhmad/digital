@@ -341,80 +341,8 @@ if uploaded_file:
 
 
 
-
-
-    st.markdown("## 📊 تقرير الأداء التفصيلي", unsafe_allow_html=True)
-
-    styled_df = final_emp_report.style.set_properties(**{
-    'background-color': '#f1c40f',   # أصفر غامق للصفوف
-    'color': '#000000',              # أسود للنص
-    'border-color': '#000000',       # أسود للحدود
-    'font-size': '14px',
-    'font-weight': 'bold',           # خط سميك
-    'text-align': 'center'
-}).set_table_styles([
-    {
-        'selector': 'thead th',
-        'props': [
-            ('background-color', '#d4ac0d'),  # أصفر أغمق للرأس
-            ('color', '#000000'),             # أسود للعناوين
-            ('font-weight', 'bold'),
-            ('text-align', 'center')
-        ]
-    }
-])
-
-    st.dataframe(styled_df, use_container_width=True)
-    st.markdown("""
-    <style>
-        body {
-            background-color: #1c1c1c;
-            color: #000000;
-        }
-        .main {
-            background-color: #1c1c1c;
-        }
-        h2 {
-            background-color: #f1c40f;
-            padding: 0.8rem 1rem;
-            border-radius: 12px;
-            color: #000000;
-            text-align: center;
-            font-weight: bold;
-        }
-        .block-container {
-            padding-top: 2rem;
-        }
-    </style>
-""", unsafe_allow_html=True)
-
-    styled_df = final_emp_report.style \
-    .set_table_styles([
-        {'selector': 'thead th', 'props': [
-            ('background-color', '#d4ac0d'),
-            ('color', '#000000'),
-            ('font-size', '14px'),
-            ('font-weight', 'bold'),
-            ('text-align', 'center'),
-            ('border', '1px solid black')
-        ]}
-    ]) \
-    .set_properties(**{
-        'background-color': '#fdfefe',
-        'color': '#000000',
-        'border-color': '#000000',
-        'font-size': '14px',
-        'font-weight': 'bold',
-        'text-align': 'center'
-    }) \
-    .highlight_even_rows(color='#f9e79f') \
-    .highlight_odd_rows(color='#fef9e7')
-
-    
-    st.dataframe(styled_df, use_container_width=True)
-
-    # st.subheader("📈 تقرير الأداء التفصيلي")
-    # st.dataframe(final_emp_report, use_container_width=True)
+    st.subheader("📈 تقرير الأداء التفصيلي")
+    st.dataframe(final_emp_report, use_container_width=True)
  
    
 
