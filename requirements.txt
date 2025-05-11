@@ -5,3 +5,5 @@ rapidfuzz
 plotly
 openpyxl
 xlrd
+scikit-learn
+
