@@ -54,7 +54,7 @@ def detailed_peak_waiting_report(df):
         start = group['Creation Date'].iloc[0]
         end = group['Creation Date'].iloc[-1]
         total_minutes = (end - start).total_seconds() / 60
-        expected_minutes = (count - 1) * 1
+        expected_minutes = (count - 1) * 3
         excess_wait = max(total_minutes - expected_minutes, 0)
 
         max_hour = group['hour'].value_counts().idxmax()
