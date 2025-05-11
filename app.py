@@ -363,7 +363,7 @@ if uploaded_file:
         }
     ])
 
-     st.dataframe(styled_df, use_container_width=True)
+    st.dataframe(styled_df, use_container_width=True)
 
 
     # st.subheader("📈 تقرير الأداء التفصيلي")
