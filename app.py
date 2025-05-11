@@ -8,38 +8,6 @@ from calendar import monthrange
 
 from sklearn.preprocessing import MinMaxScaler
 
-def calculate_ideal_employee_score(df):
-    df_eval = df.copy()
-
-    # عكس المؤشرات السلبية: الغياب، زمن الانتظار، متوسط السرعة
-    df_eval['غياب_مقلوب'] = df_eval['أيام_الغياب'].max() - df_eval['أيام_الغياب']
-    df_eval['انتظار_مقلوب'] = df_eval['متوسط_زمن_الانتظار'].max() - df_eval['متوسط_زمن_الانتظار']
-    df_eval['سرعة_مقلوبة'] = df_eval['متوسط_السرعة_في_الساعة'].max() - df_eval['متوسط_السرعة_في_الساعة']
-
-    # نختار المؤشرات التي نقيم بها
-    metrics = [
-        'نسبة_التحويلات',
-        'عدد_الحوالات_في_الساعة',
-        'أيام_نشاط_عالي',
-        'سرعة_مقلوبة',
-        'انتظار_مقلوب',
-        'غياب_مقلوب'
-    ]
-
-    # تطبيع القيم إلى مقياس من 0 إلى 100
-    scaler = MinMaxScaler(feature_range=(0, 100))
-    df_eval['تقييم_الموظف'] = scaler.fit_transform(df_eval[metrics]).sum(axis=1)
-
-    # استخراج الموظف المثالي
-    df_eval['ترتيب'] = df_eval['تقييم_الموظف'].rank(ascending=False).astype(int)
-
-    # إعادة الأعمدة
-    df_result = df.copy()
-    df_result['تقييم_الموظف'] = df_eval['تقييم_الموظف'].round(2)
-    df_result['ترتيب'] = df_eval['ترتيب']
-
-    return df_result.sort_values(by='تقييم_الموظف', ascending=False)
-
 
 def match_names(df, col1="Receiver Name - WU", col2="Receiver Name - IBAG"):
     if {col1, col2}.issubset(df.columns):
@@ -404,7 +372,6 @@ if uploaded_file:
     final_emp_report = generate_final_employee_report(df)
     downtime_report = calculate_system_downtime(df)
     peak_waiting_detail = detailed_peak_waiting_report(df)
-    df_result = calculate_ideal_employee_score(df)
 
 
 
@@ -413,8 +380,7 @@ if uploaded_file:
     
     st.subheader("📈 تقرير الأداء التفصيلي")
     st.dataframe(final_emp_report, use_container_width=True)
-    st.markdown("### قائمة الموظفين حسب التقييم النهائي")
-    st.dataframe(df_result)
+ 
    
 
     st.subheader("🛑 تقرير توقف السيستم")
