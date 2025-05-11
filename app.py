@@ -268,33 +268,33 @@ def branch_summary(df):
 
 
 
-def employee_summary(df):
-    summary = {}
-    for emp in df["Operator Id"].unique():
-        emp_df = df[df["Operator Id"] == emp]
-        days_worked = emp_df["transaction_date"].nunique()
+# def employee_summary(df):
+#     summary = {}
+#     for emp in df["Operator Id"].unique():
+#         emp_df = df[df["Operator Id"] == emp]
+#         days_worked = emp_df["transaction_date"].nunique()
 
-        first_transactions = emp_df.groupby("transaction_date")["Creation Date"].min()
-        first_transactions = pd.Series(first_transactions.values, index=pd.to_datetime(first_transactions.index))
+#         first_transactions = emp_df.groupby("transaction_date")["Creation Date"].min()
+#         first_transactions = pd.Series(first_transactions.values, index=pd.to_datetime(first_transactions.index))
 
-        on_time_morning = first_transactions.between_time("08:30", "08:45").count()
-        on_time_evening = first_transactions.between_time("13:30", "13:45").count()
-        on_time_days = on_time_morning + on_time_evening
-        commitment_score = on_time_days * 1
+#         on_time_morning = first_transactions.between_time("08:30", "08:45").count()
+#         on_time_evening = first_transactions.between_time("13:30", "13:45").count()
+#         on_time_days = on_time_morning + on_time_evening
+#         commitment_score = on_time_days * 1
 
-        summary[emp] = {
-            "unique_clients": emp_df["Receiver Name - WU"].nunique(),
-            "total_transfers": len(emp_df),
-            "total_amount": emp_df["Actual Payout Amount"].sum(),
-            "over_limit_transfers": emp_df[emp_df["Amount_range"] == "over_limit"].shape[0],
-            "working_days": days_worked,
-            "total_hours_worked": round(emp_df["Transfer Duration"].sum() / 60, 2),
-            "avg_speed": round(emp_df["Transfer Duration"].mean(), 2),
-            "high_volume_days": emp_df.groupby("transaction_date").size().gt(80).sum(),
-            "on_time_days": on_time_days,
-            "commitment_score": commitment_score
-        }
-    return summary
+#         summary[emp] = {
+#             "unique_clients": emp_df["Receiver Name - WU"].nunique(),
+#             "total_transfers": len(emp_df),
+#             "total_amount": emp_df["Actual Payout Amount"].sum(),
+#             "over_limit_transfers": emp_df[emp_df["Amount_range"] == "over_limit"].shape[0],
+#             "working_days": days_worked,
+#             "total_hours_worked": round(emp_df["Transfer Duration"].sum() / 60, 2),
+#             "avg_speed": round(emp_df["Transfer Duration"].mean(), 2),
+#             "high_volume_days": emp_df.groupby("transaction_date").size().gt(80).sum(),
+#             "on_time_days": on_time_days,
+#             "commitment_score": commitment_score
+#         }
+#     return summary
 
 
 
@@ -399,11 +399,12 @@ uploaded_file = st.file_uploader("Upload file", type=["csv", "xlsx", "xls"])
 if uploaded_file:
     df = prepare_data(uploaded_file)
     branch_report = branch_summary(df)
-    employee_report = employee_summary(df)
+    # employee_report = employee_summary(df)
     client_report = client_behavior_report(df)
     final_emp_report = generate_final_employee_report(df)
     downtime_report = calculate_system_downtime(df)
     peak_waiting_detail = detailed_peak_waiting_report(df)
+    
 
 
 
@@ -419,33 +420,44 @@ if uploaded_file:
     st.markdown("### 📊 تفاصيل أيام الذروة وزمن الانتظار")
     st.dataframe(peak_waiting_detail, use_container_width=True)    
     
-    st.markdown("""<h2 style='text-align: right;'>🏅 الموظف المثالي</h2>""", unsafe_allow_html=True)
-    emp_df = pd.DataFrame.from_dict(employee_report, orient="index").reset_index().rename(columns={"index": "اسم الموظف"})
-    emp_df = emp_df.rename(columns={
-        "unique_clients": "عدد العملاء",
-        "total_transfers": "عدد التحويلات",
-        "total_amount": "إجمالي المبلغ",
-        "over_limit_transfers": "تحويلات Over Limit",
-        "working_days": "أيام العمل",
-        "total_hours_worked": "ساعات العمل",
-        "avg_speed": "متوسط السرعة",
-        "high_volume_days": "أيام النشاط العالي",
-        "on_time_days": "أيام الالتزام",
-        "commitment_score": "نقاط الالتزام"
-    })
+    # st.markdown("""<h2 style='text-align: right;'>🏅 الموظف المثالي</h2>""", unsafe_allow_html=True)
+    # emp_df = pd.DataFrame.from_dict(employee_report, orient="index").reset_index().rename(columns={"index": "اسم الموظف"})
+    # emp_df = emp_df.rename(columns={
+    #     "unique_clients": "عدد العملاء",
+    #     "total_transfers": "عدد التحويلات",
+    #     "total_amount": "إجمالي المبلغ",
+    #     "over_limit_transfers": "تحويلات Over Limit",
+    #     "working_days": "أيام العمل",
+    #     "total_hours_worked": "ساعات العمل",
+    #     "avg_speed": "متوسط السرعة",
+    #     "high_volume_days": "أيام النشاط العالي",
+    #     "on_time_days": "أيام الالتزام",
+    #     "commitment_score": "نقاط الالتزام"
+    # })
 
-    emp_df["مؤشر الأداء"] = (
-        emp_df["عدد العملاء"] * 0.10 +
-        emp_df["عدد التحويلات"] * 0.25 +
-        emp_df["إجمالي المبلغ"] * 0.10 +
-        emp_df["نقاط الالتزام"] * 0.25 +
-        emp_df["أيام النشاط العالي"] * 0.15 -
-        emp_df["متوسط السرعة"] * 0.05
-    )
-    ideal_emp = emp_df.sort_values("مؤشر الأداء", ascending=False).iloc[0]
-    st.success(f"✨ {ideal_emp['اسم الموظف']} هو الموظف المثالي بناءً على الأداء العام")
-    st.dataframe(emp_df.sort_values("مؤشر الأداء", ascending=False), use_container_width=True)
+    # emp_df["مؤشر الأداء"] = (
+    #     emp_df["عدد العملاء"] * 0.10 +
+    #     emp_df["عدد التحويلات"] * 0.25 +
+    #     emp_df["إجمالي المبلغ"] * 0.10 +
+    #     emp_df["نقاط الالتزام"] * 0.25 +
+    #     emp_df["أيام النشاط العالي"] * 0.15 -
+    #     emp_df["متوسط السرعة"] * 0.05
+    # )
+    # ideal_emp = emp_df.sort_values("مؤشر الأداء", ascending=False).iloc[0]
+    # st.success(f"✨ {ideal_emp['اسم الموظف']} هو الموظف المثالي بناءً على الأداء العام")
+    # st.dataframe(emp_df.sort_values("مؤشر الأداء", ascending=False), use_container_width=True)
 
+
+    st.markdown("### 🏆 الموظف المثالي")
+    best_emp_row = final[final['الموظف_المثالي'] == '✔️']
+    if not best_emp_row.empty:
+        best_emp_name = best_emp_row['الموظف'].values[0]
+    st.success(f"✨ الموظف المثالي هو: **{best_emp_name}**")
+
+
+
+
+    
     st.markdown("""<h2 style='text-align: right;'>🏢 تقرير الفرع</h2>""", unsafe_allow_html=True)
     col1, col2 = st.columns(2)
     col1.metric("عدد عملاء الفرع", branch_report["unique_customers"])
