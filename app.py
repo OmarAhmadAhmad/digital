@@ -412,7 +412,11 @@ if uploaded_file:
 
     
     st.subheader("📈 تقرير الأداء التفصيلي")
-    st.dataframe(final_emp_report,df_result, use_container_width=True)
+    st.dataframe(final_emp_report, use_container_width=True)
+    st.markdown("### قائمة الموظفين حسب التقييم النهائي")
+    st.dataframe(df_result)
+    ideal_employee = df_result.iloc[0]
+    st.markdown(f"**✨ الموظف المثالي: {ideal_employee['الموظف']}**")
 
     st.subheader("🛑 تقرير توقف السيستم")
     st.dataframe(downtime_report, use_container_width=True)
