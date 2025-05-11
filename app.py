@@ -343,7 +343,7 @@ if uploaded_file:
 
 
 
-     st.markdown("## 📊 تقرير الأداء التفصيلي", unsafe_allow_html=True)
+    st.markdown("## 📊 تقرير الأداء التفصيلي", unsafe_allow_html=True)
 
     styled_df = final_emp_report.style.set_properties(**{
     'background-color': '#f2f2f2',   # رمادي فاتح للصفوف
@@ -363,7 +363,7 @@ if uploaded_file:
         }
     ])
 
-    st.dataframe(styled_df, use_container_width=True)
+     st.dataframe(styled_df, use_container_width=True)
 
 
     # st.subheader("📈 تقرير الأداء التفصيلي")
