@@ -404,7 +404,6 @@ if uploaded_file:
     final_emp_report = generate_final_employee_report(df)
     downtime_report = calculate_system_downtime(df)
     peak_waiting_detail = detailed_peak_waiting_report(df)
-    
 
 
 
@@ -420,45 +419,9 @@ if uploaded_file:
     st.markdown("### 📊 تفاصيل أيام الذروة وزمن الانتظار")
     st.dataframe(peak_waiting_detail, use_container_width=True)    
     
-    # st.markdown("""<h2 style='text-align: right;'>🏅 الموظف المثالي</h2>""", unsafe_allow_html=True)
-    # emp_df = pd.DataFrame.from_dict(employee_report, orient="index").reset_index().rename(columns={"index": "اسم الموظف"})
-    # emp_df = emp_df.rename(columns={
-    #     "unique_clients": "عدد العملاء",
-    #     "total_transfers": "عدد التحويلات",
-    #     "total_amount": "إجمالي المبلغ",
-    #     "over_limit_transfers": "تحويلات Over Limit",
-    #     "working_days": "أيام العمل",
-    #     "total_hours_worked": "ساعات العمل",
-    #     "avg_speed": "متوسط السرعة",
-    #     "high_volume_days": "أيام النشاط العالي",
-    #     "on_time_days": "أيام الالتزام",
-    #     "commitment_score": "نقاط الالتزام"
-    # })
+   
 
-    # emp_df["مؤشر الأداء"] = (
-    #     emp_df["عدد العملاء"] * 0.10 +
-    #     emp_df["عدد التحويلات"] * 0.25 +
-    #     emp_df["إجمالي المبلغ"] * 0.10 +
-    #     emp_df["نقاط الالتزام"] * 0.25 +
-    #     emp_df["أيام النشاط العالي"] * 0.15 -
-    #     emp_df["متوسط السرعة"] * 0.05
-    # )
-    # ideal_emp = emp_df.sort_values("مؤشر الأداء", ascending=False).iloc[0]
-    # st.success(f"✨ {ideal_emp['اسم الموظف']} هو الموظف المثالي بناءً على الأداء العام")
-    # st.dataframe(emp_df.sort_values("مؤشر الأداء", ascending=False), use_container_width=True)
-
-
-    # الخطوة 1: تنفيذ الدالة
-    final = generate_final_employee_report(df)
-
-# الخطوة 2: استخراج الموظف المثالي
-    best_emp_row = final[final['الموظف_المثالي'] == '✔️']
-    if not best_emp_row.empty:
-        best_emp_name = best_emp_row['الموظف'].values[0]
-    st.success(f"✨ الموظف المثالي هو: **{best_emp_name}**")
-
-
-
+ 
 
 
     
