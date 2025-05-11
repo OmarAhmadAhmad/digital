@@ -343,18 +343,28 @@ if uploaded_file:
 
 
 
-    st.markdown("## 📊 تقرير الأداء التفصيلي", unsafe_allow_html=True)
+     st.markdown("## 📊 تقرير الأداء التفصيلي", unsafe_allow_html=True)
 
-    st.dataframe(
-        final_emp_report.style.set_properties(**{
-        'background-color': '#ffffff',
-        'color': '#2c3e50',
-        'border-color': '#dee2e6',
-        'font-size': '14px',
-        'text-align': 'center'
-    }),
-    use_container_width=True
-)
+    styled_df = final_emp_report.style.set_properties(**{
+    'background-color': '#f2f2f2',   # رمادي فاتح للصفوف
+    'color': '#000000',              # أسود للنص
+    'border-color': '#dcdcdc',       # رمادي للحدود
+    'font-size': '14px',
+    'text-align': 'center'
+    }).set_table_styles([
+    {
+        'selector': 'thead th',
+        'props': [
+            ('background-color', '#f9ca24'),  # أصفر داكن للرأس
+            ('color', '#000000'),             # خط أسود للرأس
+            ('font-weight', 'bold'),
+            ('text-align', 'center')
+            ]
+        }
+    ])
+
+    st.dataframe(styled_df, use_container_width=True)
+
 
     # st.subheader("📈 تقرير الأداء التفصيلي")
     # st.dataframe(final_emp_report, use_container_width=True)
