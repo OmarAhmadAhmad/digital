@@ -4,8 +4,6 @@ import matplotlib.pyplot as plt
 from datetime import time
 from rapidfuzz import fuzz
 from calendar import monthrange
-
-
 from sklearn.preprocessing import MinMaxScaler
 
 
@@ -235,36 +233,6 @@ def branch_summary(df):
 
 
 
-# def employee_summary(df):
-#     summary = {}
-#     for emp in df["Operator Id"].unique():
-#         emp_df = df[df["Operator Id"] == emp]
-#         days_worked = emp_df["transaction_date"].nunique()
-
-#         first_transactions = emp_df.groupby("transaction_date")["Creation Date"].min()
-#         first_transactions = pd.Series(first_transactions.values, index=pd.to_datetime(first_transactions.index))
-
-#         on_time_morning = first_transactions.between_time("08:30", "08:45").count()
-#         on_time_evening = first_transactions.between_time("13:30", "13:45").count()
-#         on_time_days = on_time_morning + on_time_evening
-#         commitment_score = on_time_days * 1
-
-#         summary[emp] = {
-#             "unique_clients": emp_df["Receiver Name - WU"].nunique(),
-#             "total_transfers": len(emp_df),
-#             "total_amount": emp_df["Actual Payout Amount"].sum(),
-#             "over_limit_transfers": emp_df[emp_df["Amount_range"] == "over_limit"].shape[0],
-#             "working_days": days_worked,
-#             "total_hours_worked": round(emp_df["Transfer Duration"].sum() / 60, 2),
-#             "avg_speed": round(emp_df["Transfer Duration"].mean(), 2),
-#             "high_volume_days": emp_df.groupby("transaction_date").size().gt(80).sum(),
-#             "on_time_days": on_time_days,
-#             "commitment_score": commitment_score
-#         }
-#     return summary
-
-
-
 
 def generate_final_employee_report(df):
     df['transaction_date'] = df['Creation Date'].dt.date
@@ -366,7 +334,6 @@ uploaded_file = st.file_uploader("Upload file", type=["csv", "xlsx", "xls"])
 if uploaded_file:
     df = prepare_data(uploaded_file)
     branch_report = branch_summary(df)
-    # employee_report = employee_summary(df)
     client_report = client_behavior_report(df)
     final_emp_report = generate_final_employee_report(df)
     downtime_report = calculate_system_downtime(df)
