@@ -448,11 +448,15 @@ if uploaded_file:
     # st.dataframe(emp_df.sort_values("مؤشر الأداء", ascending=False), use_container_width=True)
 
 
-    st.markdown("### 🏆 الموظف المثالي")
+    # الخطوة 1: تنفيذ الدالة
+    final = generate_final_employee_report(df)
+
+# الخطوة 2: استخراج الموظف المثالي
     best_emp_row = final[final['الموظف_المثالي'] == '✔️']
     if not best_emp_row.empty:
         best_emp_name = best_emp_row['الموظف'].values[0]
     st.success(f"✨ الموظف المثالي هو: **{best_emp_name}**")
+
 
 
 
