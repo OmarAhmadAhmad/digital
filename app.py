@@ -39,6 +39,37 @@ def match_names(df, col1="Receiver Name - WU", col2="Receiver Name - IBAG"):
     return df
 
 
+# def detailed_peak_waiting_report(df):
+#     df = df.sort_values(by='Creation Date')
+#     df['hour'] = df['Creation Date'].dt.hour
+#     result = []
+
+#     for day, group in df.groupby('transaction_date'):
+#         group = group.sort_values('Creation Date')
+#         count = group.shape[0]
+
+#         if count <= 300 or count < 2:
+#             continue
+
+#         start = group['Creation Date'].iloc[0]
+#         end = group['Creation Date'].iloc[-1]
+#         total_minutes = (end - start).total_seconds() / 60
+#         expected_minutes = (count - 1) * 3
+#         excess_wait = max(total_minutes - expected_minutes, 0)
+
+#         max_hour = group['hour'].value_counts().idxmax()
+#         num_employees = group['Operator Id'].nunique()
+
+#         result.append({
+#             "تاريخ": day,
+#             "اليوم": group["day_of_week"].iloc[0] if "day_of_week" in group.columns else pd.to_datetime(day).day_name(),
+#             "عدد التحويلات": count,
+#             "عدد الموظفين": num_employees,
+#             "الانتظار الزائد (دقائق)": round(excess_wait, 2),
+#             "أعلى ساعة تحويلات": f"{max_hour}:00"
+#         })
+
+#     return pd.DataFrame(result)
 def detailed_peak_waiting_report(df):
     df = df.sort_values(by='Creation Date')
     df['hour'] = df['Creation Date'].dt.hour
@@ -54,23 +85,32 @@ def detailed_peak_waiting_report(df):
         start = group['Creation Date'].iloc[0]
         end = group['Creation Date'].iloc[-1]
         total_minutes = (end - start).total_seconds() / 60
-        expected_minutes = (count - 1) * 3
+        
+        # تعديل الزمن المتوقع من 1 دقيقة إلى 3 دقائق
+        expected_minutes = (count - 1) * 3  # هنا قمنا بتغيير الوقت المتوقع إلى 3 دقائق
         excess_wait = max(total_minutes - expected_minutes, 0)
+
+        # تحويل الوقت الزائد إلى ساعات ودقائق
+        excess_hours = int(excess_wait // 60)  # حساب الساعات
+        excess_minutes = int(excess_wait % 60)  # حساب الدقائق المتبقية
+
+        # إذا لم يكن العمود day_of_week موجودًا، نضيفه استنادًا إلى التاريخ
+        if 'day_of_week' not in group.columns:
+            group['day_of_week'] = pd.to_datetime(day).day_name()
 
         max_hour = group['hour'].value_counts().idxmax()
         num_employees = group['Operator Id'].nunique()
 
         result.append({
             "تاريخ": day,
-            "اليوم": group["day_of_week"].iloc[0] if "day_of_week" in group.columns else pd.to_datetime(day).day_name(),
+            "اليوم": group["day_of_week"].iloc[0],
             "عدد التحويلات": count,
             "عدد الموظفين": num_employees,
-            "الانتظار الزائد (دقائق)": round(excess_wait, 2),
+            "الانتظار الزائد (ساعات:دقائق)": f"{excess_hours} ساعة و {excess_minutes} دقيقة",
             "أعلى ساعة تحويلات": f"{max_hour}:00"
         })
 
     return pd.DataFrame(result)
-
 
 
 
