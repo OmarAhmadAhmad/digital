@@ -398,7 +398,7 @@ if uploaded_file:
     shift_summary = shift_start_compliance(df)
 
 
-     st.markdown("### 🕒 التزام الموظفين ببدء الشفت")
+    st.markdown("### 🕒 التزام الموظفين ببدء الشفت")
     st.dataframe(shift_summary, use_container_width=True)
 
     st.subheader("📈 تقرير الأداء التفصيلي")
