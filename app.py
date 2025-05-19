@@ -11,45 +11,50 @@ import datetime
 import pandas as pd
 
 def shift_start_compliance(df):
-    # التأكد من أن Creation Date وPayout Time بالتنسيق الصحيح
+    # التأكد من تنسيق الأعمدة
     df["Creation Date"] = pd.to_datetime(df["Creation Date"], errors='coerce')
     df["Payout Time"] = pd.to_datetime(df["Payout Time"], format="%H:%M:%S", errors='coerce').dt.time
 
+    # إزالة الصفوف التي بها بيانات ناقصة
     df = df.dropna(subset=["Creation Date", "Payout Time"])
 
     # استخراج التاريخ فقط
     df["Transaction Date"] = df["Creation Date"].dt.date
 
-    # استخراج أول تحويل لكل موظف في كل يوم بناءً على وقت الدفع
+    # ترتيب واستخراج أول عملية تحويل يوميًا لكل موظف
     df = df.sort_values(["Operator Id", "Transaction Date", "Payout Time"])
     first_transfers = df.groupby(["Operator Id", "Transaction Date"]).first().reset_index()
 
-    # تعريف الشفتات
+    # تعريف وقت الالتزام بالشفتات
     def is_morning_shift(t):
         return datetime.time(8,30) <= t <= datetime.time(8,50)
     
     def is_evening_shift(t):
         return datetime.time(13,30) <= t <= datetime.time(13,50)
 
+    # تحديد الالتزام بالشفت الصباحي أو المسائي
     first_transfers["Morning Shift"] = first_transfers["Payout Time"].apply(is_morning_shift)
     first_transfers["Evening Shift"] = first_transfers["Payout Time"].apply(is_evening_shift)
 
-    # إضافة تاريخ التقرير
-    today = datetime.date.today()
-    first_transfers["تاريخ استخراج التقرير"] = today
+    # استخراج أول تاريخ عمل لكل موظف
+    first_day = first_transfers.groupby("Operator Id")["Transaction Date"].min().reset_index()
+    first_day = first_day.rename(columns={"Transaction Date": "تاريخ أول يوم عمل"})
 
-    # تلخيص النتائج
+    # تلخيص الالتزام
     summary = first_transfers.groupby("Operator Id").agg({
         "Morning Shift": "sum",
         "Evening Shift": "sum",
-        "Transaction Date": "nunique",
-        "تاريخ استخراج التقرير": "first"
+        "Transaction Date": "nunique"
     }).reset_index().rename(columns={
         "Operator Id": "الموظف",
         "Morning Shift": "أيام التزام بالشفت الصباحي",
         "Evening Shift": "أيام التزام بالشفت المسائي",
         "Transaction Date": "عدد أيام العمل"
     })
+
+    # دمج التاريخ الأول مع الملخص
+    summary = pd.merge(summary, first_day, left_on="الموظف", right_on="Operator Id", how="left")
+    summary = summary.drop(columns=["Operator Id"])
 
     return summary
 
