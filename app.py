@@ -10,43 +10,44 @@ from sklearn.preprocessing import MinMaxScaler
 import datetime
 import pandas as pd
 
-import datetime
-import pandas as pd
-
 def shift_start_compliance(df):
-    df["Transaction Date"] = pd.to_datetime(df["Creation Date"])
-    df["Transaction Time"] = df["Transaction Date"].dt.time
-    df["date_only"] = df["Transaction Date"].dt.date
+    # تأكد أن التنسيق مضبوط
+    df["Creation Date"] = pd.to_datetime(df["Creation Date"], errors='coerce')
+    df = df.dropna(subset=["Creation Date"])
 
-    # أول تحويل يومي لكل موظف
-    first_transfers = df.sort_values(["Operator Id", "Transaction Date", "Transaction Time"]).groupby(
-        ["Operator Id", "date_only"]
+    df["Transaction Date"] = df["Creation Date"].dt.date
+    df["Transaction Time"] = df["Creation Date"].dt.time
+
+    # نحدد أول عملية تحويل لكل موظف في كل يوم
+    first_transfers = df.sort_values(["Operator Id", "Creation Date"]).groupby(
+        ["Operator Id", "Transaction Date"]
     ).first().reset_index()
 
+    # تحديد أوقات الشفتات
     def is_morning_shift(t):
         return datetime.time(8,30) <= t <= datetime.time(8,50)
     
     def is_evening_shift(t):
         return datetime.time(13,30) <= t <= datetime.time(13,50)
 
-    # تحديد نوع الالتزام
     first_transfers["Morning Shift"] = first_transfers["Transaction Time"].apply(is_morning_shift)
     first_transfers["Evening Shift"] = first_transfers["Transaction Time"].apply(is_evening_shift)
 
-    # إضافة تاريخ اليوم كعمود ثابت
+    # تاريخ التقرير
     today = datetime.date.today()
     first_transfers["تاريخ استخراج التقرير"] = today
 
+    # ملخص لكل موظف
     summary = first_transfers.groupby("Operator Id").agg({
         "Morning Shift": "sum",
         "Evening Shift": "sum",
-        "date_only": "nunique",
+        "Transaction Date": "nunique",
         "تاريخ استخراج التقرير": "first"
     }).reset_index().rename(columns={
         "Operator Id": "الموظف",
         "Morning Shift": "أيام التزام بالشفت الصباحي",
         "Evening Shift": "أيام التزام بالشفت المسائي",
-        "date_only": "عدد أيام العمل"
+        "Transaction Date": "عدد أيام العمل"
     })
 
     return summary
