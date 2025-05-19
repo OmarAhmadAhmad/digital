@@ -7,9 +7,6 @@ from calendar import monthrange
 from sklearn.preprocessing import MinMaxScaler
 
 
-import datetime
-import pandas as pd
-
 def shift_start_compliance(df):
     # التأكد من تنسيق الأعمدة
     df["Creation Date"] = pd.to_datetime(df["Creation Date"], errors='coerce')
@@ -27,10 +24,10 @@ def shift_start_compliance(df):
 
     # تعريف وقت الالتزام بالشفتات
     def is_morning_shift(t):
-        return datetime.time(8,30) <= t <= datetime.time(8,50)
+        return datetime.time(8,30) <= t <= datetime.time(8,45)
     
     def is_evening_shift(t):
-        return datetime.time(13,30) <= t <= datetime.time(13,50)
+        return datetime.time(13,30) <= t <= datetime.time(13,59)
 
     # تحديد الالتزام بالشفت الصباحي أو المسائي
     first_transfers["Morning Shift"] = first_transfers["Payout Time"].apply(is_morning_shift)
@@ -49,7 +46,7 @@ def shift_start_compliance(df):
         "Operator Id": "الموظف",
         "Morning Shift": "أيام التزام بالشفت الصباحي",
         "Evening Shift": "أيام التزام بالشفت المسائي",
-        "Transaction Date": "عدد أيام العمل"
+      
     })
 
     # دمج التاريخ الأول مع الملخص
