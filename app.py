@@ -14,26 +14,30 @@ import pandas as pd
 import datetime
 
 def shift_start_compliance(df):
-    # تحويل الأعمدة للتواريخ
+    # تحويل الأعمدة
     df["Transaction Date"] = pd.to_datetime(df["Creation Date"])
-    df["Payout Time"] = pd.to_datetime(df["Payout Time"], format="%H:%M:%S").dt.time
     df["date_only"] = df["Transaction Date"].dt.date
+    df["Payout Time"] = pd.to_datetime(df["Payout Time"], format="%H:%M:%S").dt.time
 
-    # ترتيب وأخذ أول تحويل يومي لكل موظف
+    # ترتيب وأخذ أول عملية لكل موظف في كل يوم
     first_transfers = df.sort_values(["Operator Id", "date_only", "Payout Time"]).groupby(
         ["Operator Id", "date_only"]
     ).first().reset_index()
 
-    # دوال التحقق من التزام الشفتات
+    # دوال التحقق من الالتزام
     def is_morning_shift(t):
         return datetime.time(8, 30) <= t <= datetime.time(8, 40)
 
     def is_evening_shift(t):
         return datetime.time(13, 30) <= t <= datetime.time(13, 59)
 
-    # تحديد الالتزام حسب وقت أول عملية
+    # إضافة أعمدة الالتزام
     first_transfers["Morning Shift OK"] = first_transfers["Payout Time"].apply(is_morning_shift)
     first_transfers["Evening Shift OK"] = first_transfers["Payout Time"].apply(is_evening_shift)
+
+    # طباعة أول 10 صفوف للتأكد
+    print("\n📌 أول العمليات اليومية لكل موظف:")
+    print(first_transfers[["Operator Id", "date_only", "Payout Time", "Morning Shift OK", "Evening Shift OK"]].head(10))
 
     # جمع تواريخ الالتزام لكل موظف
     morning_dates = first_transfers[first_transfers["Morning Shift OK"]].groupby("Operator Id")["date_only"].apply(list)
@@ -41,7 +45,7 @@ def shift_start_compliance(df):
 
     # بناء جدول النتائج
     summary = pd.DataFrame({
-        "الموظف": list(set(first_transfers["Operator Id"]))
+        "الموظف": sorted(set(first_transfers["Operator Id"]))
     })
 
     summary["عدد أيام الالتزام بالشفت الصباحي"] = summary["الموظف"].map(
@@ -59,15 +63,6 @@ def shift_start_compliance(df):
     )
 
     return summary
-
-    
-
-
-
-
-
-
-
 
 
 
