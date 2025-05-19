@@ -10,6 +10,9 @@ from sklearn.preprocessing import MinMaxScaler
 
 
 
+import datetime
+import pandas as pd
+
 def shift_start_compliance(df):
     # تحويل الأعمدة إلى وقت وتاريخ
     df["Transaction Date"] = pd.to_datetime(df["Creation Date"])
@@ -66,6 +69,7 @@ def shift_start_compliance(df):
     ]]
 
     return summary
+
 
 
     
