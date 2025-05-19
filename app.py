@@ -26,10 +26,10 @@ def shift_start_compliance(df):
 
     # دوال التحقق من الالتزام
     def is_morning_shift(t):
-        return datetime.time(8, 15) <= t <= datetime.time(8, 45)
+        return datetime.time(8, 00) <= t <= datetime.time(8, 45)
 
     def is_evening_shift(t):
-        return datetime.time(13, 30) <= t <= datetime.time(13, 59)
+        return datetime.time(13, 20) <= t <= datetime.time(13, 59)
 
     # إضافة أعمدة الالتزام
     first_transfers["Morning Shift OK"] = first_transfers["Payout Time"].apply(is_morning_shift)
