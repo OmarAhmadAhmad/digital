@@ -7,6 +7,54 @@ from calendar import monthrange
 from sklearn.preprocessing import MinMaxScaler
 
 
+
+def shift_start_compliance_with_dates(df):
+    df["Transaction Date"] = pd.to_datetime(df["Transaction Date"])
+    df["Transaction Time"] = pd.to_datetime(df["Transaction Time"], format="%H:%M:%S").dt.time
+
+    df["date_only"] = df["Transaction Date"].dt.date
+    df["time_only"] = pd.to_datetime(df["Transaction Time"].astype(str)).dt.time
+
+    # أول تحويل يومي لكل موظف
+    first_transfers = df.sort_values(["Operator Id", "Transaction Date", "Transaction Time"]).groupby(
+        ["Operator Id", "date_only"]
+    ).first().reset_index()
+
+    def is_morning_shift(t):
+        return datetime.time(8, 30) <= t <= datetime.time(8, 45)
+
+    def is_evening_shift(t):
+        return datetime.time(13, 30) <= t <= datetime.time(13, 45)
+
+    # تحديد نوع الالتزام
+    first_transfers["Morning Shift"] = first_transfers["Transaction Time"].apply(lambda t: is_morning_shift(t))
+    first_transfers["Evening Shift"] = first_transfers["Transaction Time"].apply(lambda t: is_evening_shift(t))
+
+    # استخراج التواريخ لكل نوع شفت
+    morning_dates = first_transfers[first_transfers["Morning Shift"]].groupby("Operator Id")["date_only"].apply(list)
+    evening_dates = first_transfers[first_transfers["Evening Shift"]].groupby("Operator Id")["date_only"].apply(list)
+
+    summary = first_transfers.groupby("Operator Id").agg({
+        "Morning Shift": "sum",
+        "Evening Shift": "sum",
+        "date_only": "nunique"
+    }).reset_index().rename(columns={
+        "Operator Id": "الموظف",
+        "Morning Shift": "أيام التزام بالشفت الصباحي",
+        "Evening Shift": "أيام التزام بالشفت المسائي",
+        "date_only": "عدد أيام العمل"
+    })
+
+    # ضم التواريخ للملخص
+    summary["تواريخ الصباحي"] = summary["الموظف"].map(morning_dates).apply(lambda x: x if isinstance(x, list) else [])
+    summary["تواريخ المسائي"] = summary["الموظف"].map(evening_dates).apply(lambda x: x if isinstance(x, list) else [])
+
+    return summary
+
+
+
+
+
 def app_transfers_by_employee(df):
     app_df = df[df["System"] == "App"]
     summary = app_df.groupby("Operator Id").agg({
@@ -355,6 +403,7 @@ if uploaded_file:
     downtime_report = calculate_system_downtime(df)
     peak_waiting_detail = detailed_peak_waiting_report(df)
     app_emp_report = app_transfers_by_employee(df)
+    summary = shift_start_compliance_with_dates(df)
 
 
 
@@ -370,6 +419,10 @@ if uploaded_file:
     st.markdown("### 📊 تفاصيل أيام الذروة وزمن الانتظار")
     st.dataframe(peak_waiting_detail, use_container_width=True)    
     
+    
+    
+    st.markdown("### 🕒 التزام الموظفين ببدء الشفت مع التواريخ")
+    st.dataframe(summary, use_container_width=True)
    
 
  
