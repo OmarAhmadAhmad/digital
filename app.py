@@ -8,11 +8,11 @@ from sklearn.preprocessing import MinMaxScaler
 
 
 def shift_start_compliance(df):
-    df["Transaction Date"] = pd.to_datetime(df["Transaction Date"])
-    df["Transaction Time"] = pd.to_datetime(df["Transaction Time"], format="%H:%M:%S").dt.time
+    df["Transaction Date"] = pd.to_datetime(df["Creation Date"])
+    df["Transaction Time"] = pd.to_datetime(df["Creation Date"], format="%H:%M:%S").dt.time
     
-    df["date_only"] = df["Transaction Date"].dt.date
-    df["time_only"] = pd.to_datetime(df["Transaction Time"].astype(str)).dt.time
+    df["date_only"] = df["Creation Date"].dt.date
+    df["time_only"] = pd.to_datetime(df["Creation Date"].astype(str)).dt.time
 
     # أول تحويل يومي لكل موظف
     first_transfers = df.sort_values(["Operator Id", "Transaction Date", "Transaction Time"]).groupby(
@@ -398,13 +398,13 @@ if uploaded_file:
     shift_summary = shift_start_compliance(df)
 
 
-
+     st.markdown("### 🕒 التزام الموظفين ببدء الشفت")
+    st.dataframe(shift_summary, use_container_width=True)
 
     st.subheader("📈 تقرير الأداء التفصيلي")
     st.dataframe(final_emp_report, use_container_width=True)
 
-    st.markdown("### 🕒 التزام الموظفين ببدء الشفت")
-    st.dataframe(shift_summary, use_container_width=True)
+   
 
 
     
