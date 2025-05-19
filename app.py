@@ -7,53 +7,48 @@ from calendar import monthrange
 from sklearn.preprocessing import MinMaxScaler
 
 
+
+
 def shift_start_compliance(df):
-    # التأكد من تنسيق الأعمدة
-    df["Creation Date"] = pd.to_datetime(df["Creation Date"], errors='coerce')
-    df["Payout Time"] = pd.to_datetime(df["Payout Time"], format="%H:%M:%S", errors='coerce').dt.time
+    df["Transaction Date"] = pd.to_datetime(df["Creation Date"])
+    df["Transaction Time"] = pd.to_datetime(df["Payout Time"], format="%H:%M:%S").dt.time
+    df["date_only"] = df["Transaction Date"].dt.date
 
-    # إزالة الصفوف التي بها بيانات ناقصة
-    df = df.dropna(subset=["Creation Date", "Payout Time"])
+    # أول تحويل يومي لكل موظف
+    first_transfers = df.sort_values(["Operator Id", "Transaction Date", "Transaction Time"]).groupby(
+        ["Operator Id", "date_only"]
+    ).first().reset_index()
 
-    # استخراج التاريخ فقط
-    df["Transaction Date"] = df["Creation Date"].dt.date
-
-    # ترتيب واستخراج أول عملية تحويل يوميًا لكل موظف
-    df = df.sort_values(["Operator Id", "Transaction Date", "Payout Time"])
-    first_transfers = df.groupby(["Operator Id", "Transaction Date"]).first().reset_index()
-
-    # تعريف وقت الالتزام بالشفتات
     def is_morning_shift(t):
-        return datetime.time(8,30) <= t <= datetime.time(8,45)
-    
+        return datetime.time(8, 30) <= t <= datetime.time(8, 40)
+
     def is_evening_shift(t):
-        return datetime.time(13,30) <= t <= datetime.time(13,59)
+        return datetime.time(13, 30) <= t <= datetime.time(13, 55)
 
-    # تحديد الالتزام بالشفت الصباحي أو المسائي
-    first_transfers["Morning Shift"] = first_transfers["Payout Time"].apply(is_morning_shift)
-    first_transfers["Evening Shift"] = first_transfers["Payout Time"].apply(is_evening_shift)
+    # تحديد نوع الالتزام
+    first_transfers["Morning Shift"] = first_transfers["Transaction Time"].apply(lambda t: is_morning_shift(t))
+    first_transfers["Evening Shift"] = first_transfers["Transaction Time"].apply(lambda t: is_evening_shift(t))
 
-    # استخراج أول تاريخ عمل لكل موظف
-    first_day = first_transfers.groupby("Operator Id")["Transaction Date"].min().reset_index()
-    first_day = first_day.rename(columns={"Transaction Date": "تاريخ أول يوم عمل"})
+    # استخراج تاريخ أول التزام
+    morning_dates = first_transfers[first_transfers["Morning Shift"]].groupby("Operator Id")["date_only"].min()
+    evening_dates = first_transfers[first_transfers["Evening Shift"]].groupby("Operator Id")["date_only"].min()
 
-    # تلخيص الالتزام
     summary = first_transfers.groupby("Operator Id").agg({
         "Morning Shift": "sum",
-        "Evening Shift": "sum",
-        "Transaction Date": "nunique"
-    }).reset_index().rename(columns={
+        "Evening Shift": "sum"
+    }).reset_index()
+
+    summary["تاريخ أول التزام صباحي"] = summary["Operator Id"].map(morning_dates)
+    summary["تاريخ أول التزام مسائي"] = summary["Operator Id"].map(evening_dates)
+
+    summary = summary.rename(columns={
         "Operator Id": "الموظف",
         "Morning Shift": "أيام التزام بالشفت الصباحي",
         "Evening Shift": "أيام التزام بالشفت المسائي",
-      
     })
 
-    # دمج التاريخ الأول مع الملخص
-    summary = pd.merge(summary, first_day, left_on="الموظف", right_on="Operator Id", how="left")
-    summary = summary.drop(columns=["Operator Id"])
-
     return summary
+
 
 
 
