@@ -10,62 +10,62 @@ from sklearn.preprocessing import MinMaxScaler
 
 
 
-import datetime
 import pandas as pd
+import datetime
 
 def shift_start_compliance(df):
-    # تحويل الأعمدة إلى وقت وتاريخ
+    # التأكد من أن الأعمدة بالصيغة الصحيحة
     df["Transaction Date"] = pd.to_datetime(df["Creation Date"])
-    df["Transaction Time"] = pd.to_datetime(df["Payout Time"], format="%H:%M:%S").dt.time
+    df["Payout Time"] = pd.to_datetime(df["Payout Time"], format="%H:%M:%S").dt.time
     df["date_only"] = df["Transaction Date"].dt.date
 
-    # أول عملية تحويل يومية لكل موظف
-    first_transfers = df.sort_values(["Operator Id", "Transaction Date", "Transaction Time"]).groupby(
+    # أول تحويلة لكل موظف في كل يوم
+    first_transfers = df.sort_values(["Operator Id", "date_only", "Payout Time"]).groupby(
         ["Operator Id", "date_only"]
     ).first().reset_index()
 
-    # تعريف فترات الشفتات
+    # تحديد نطاق الشفتات
     def is_morning_shift(t):
-        return datetime.time(8, 30) <= t <= datetime.time(8, 50)
+        return datetime.time(8, 30) <= t <= datetime.time(8, 40)
 
     def is_evening_shift(t):
         return datetime.time(13, 30) <= t <= datetime.time(13, 59)
 
-    # تحديد إذا كانت ضمن الشفت المحدد
-    first_transfers["Morning Shift"] = first_transfers["Transaction Time"].apply(is_morning_shift)
-    first_transfers["Evening Shift"] = first_transfers["Transaction Time"].apply(is_evening_shift)
+    # تقييم الالتزام
+    first_transfers["Morning Shift"] = first_transfers["Payout Time"].apply(is_morning_shift)
+    first_transfers["Evening Shift"] = first_transfers["Payout Time"].apply(is_evening_shift)
 
-    # تجميع تواريخ الالتزام بالشفت لكل موظف
+    # تجميع التواريخ التي تم فيها الالتزام
     morning_dates = first_transfers[first_transfers["Morning Shift"]].groupby("Operator Id")["date_only"].apply(list)
     evening_dates = first_transfers[first_transfers["Evening Shift"]].groupby("Operator Id")["date_only"].apply(list)
 
-    # تلخيص عدد أيام الالتزام
+    # إنشاء جدول ملخص
     summary = first_transfers.groupby("Operator Id").agg({
         "Morning Shift": "sum",
         "Evening Shift": "sum"
     }).reset_index()
 
-    # إضافة القوائم الخاصة بالتواريخ
-    summary["تواريخ الالتزام بالشفت الصباحي"] = summary["Operator Id"].map(
+    # إضافة التواريخ إلى الملخص
+    summary["تواريخ الشفت الصباحي"] = summary["Operator Id"].map(
         morning_dates).apply(lambda x: [d.strftime("%d/%m/%Y") for d in x] if isinstance(x, list) else [])
     
-    summary["تواريخ الالتزام بالشفت المسائي"] = summary["Operator Id"].map(
+    summary["تواريخ الشفت المسائي"] = summary["Operator Id"].map(
         evening_dates).apply(lambda x: [d.strftime("%d/%m/%Y") for d in x] if isinstance(x, list) else [])
 
-    # إعادة التسمية
+    # إعادة التسمية بالعربية
     summary = summary.rename(columns={
         "Operator Id": "الموظف",
-        "Morning Shift": "أيام الالتزام بالشفت الصباحي",
-        "Evening Shift": "أيام الالتزام بالشفت المسائي"
+        "Morning Shift": "عدد أيام الالتزام بالشفت الصباحي",
+        "Evening Shift": "عدد أيام الالتزام بالشفت المسائي"
     })
 
     # ترتيب الأعمدة
     summary = summary[[
         "الموظف",
-        "أيام الالتزام بالشفت الصباحي",
-        "تواريخ الالتزام بالشفت الصباحي",
-        "أيام الالتزام بالشفت المسائي",
-        "تواريخ الالتزام بالشفت المسائي"
+        "عدد أيام الالتزام بالشفت الصباحي",
+        "تواريخ الشفت الصباحي",
+        "عدد أيام الالتزام بالشفت المسائي",
+        "تواريخ الشفت المسائي"
     ]]
 
     return summary
