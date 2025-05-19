@@ -7,6 +7,22 @@ from calendar import monthrange
 from sklearn.preprocessing import MinMaxScaler
 
 
+def app_transfers_by_employee(df):
+    app_df = df[df["System"] == "App"]
+    summary = app_df.groupby("Operator Id").agg({
+        "MTCN": "count",
+        "Actual Payout Amount": "sum"
+    }).reset_index().rename(columns={
+        "Operator Id": "الموظف",
+        "MTCN": "عدد تحويلات App",
+        "Actual Payout Amount": "إجمالي مبلغ App"
+    })
+    return summary
+
+
+
+
+
 def match_names(df, col1="Receiver Name - WU", col2="Receiver Name - IBAG"):
     if {col1, col2}.issubset(df.columns):
         equivalent_names = {name.lower(): [name.lower()] for name in df[col1].dropna().unique()}
@@ -338,6 +354,8 @@ if uploaded_file:
     final_emp_report = generate_final_employee_report(df)
     downtime_report = calculate_system_downtime(df)
     peak_waiting_detail = detailed_peak_waiting_report(df)
+    app_emp_report = app_transfers_by_employee(df)
+
 
 
 
@@ -362,6 +380,10 @@ if uploaded_file:
     col1, col2 = st.columns(2)
     col1.metric("عدد عملاء الفرع", branch_report["unique_customers"])
     col2.metric("إجمالي عدد التحويلات", branch_report["total_transfers"])
+
+    st.markdown("### 🔢 توزيع تحويلات App حسب الموظفين")
+    st.dataframe(app_emp_report, use_container_width=True)
+
 
     # with st.expander("📊 التحويلات حسب النظام"):
     #     system_df = pd.DataFrame(branch_report["transfers_by_system"].items(), columns=["النظام", "عدد التحويلات"])
