@@ -26,7 +26,7 @@ def shift_start_compliance(df):
 
     # دوال التحقق من الالتزام
     def is_morning_shift(t):
-        return datetime.time(8, 30) <= t <= datetime.time(8, 40)
+        return datetime.time(8, 30) <= t <= datetime.time(8, 45)
 
     def is_evening_shift(t):
         return datetime.time(13, 30) <= t <= datetime.time(13, 59)
