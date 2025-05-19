@@ -70,11 +70,9 @@ def app_transfers_by_employee(df):
     app_df = df[df["System"] == "App"]
     summary = app_df.groupby("Operator Id").agg({
         "MTCN": "count",
-        "Actual Payout Amount": "sum"
     }).reset_index().rename(columns={
         "Operator Id": "الموظف",
         "MTCN": "عدد تحويلات App",
-        "Actual Payout Amount": "إجمالي مبلغ App"
     })
     return summary
 
